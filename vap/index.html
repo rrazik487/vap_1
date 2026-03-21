@@ -368,7 +368,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 //  CONFIG
 // ═══════════════════════════════════════════════════════════════════
 const SB_URL = 'https://ymprftmrojvmuvklyjay.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NzIyMTgsImV4cCI6MjA1ODA0ODIxOH0.r7eFfUBDqM5PPhKm_dqSMD9mdGVPgPRw29MujyF6jQg';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDQ1NTksImV4cCI6MjA4OTA4MDU1OX0.kR9gnlaoAqs1LcdRO3t5DtG5rWKbpA3AyHKOhkF3RsM';
 const BASE   = 'https://razik.xyz/vap';
 const sb     = supabase.createClient(SB_URL, SB_KEY);
 
@@ -398,15 +398,35 @@ async function doLogin() {
   const email = document.getElementById('li-email').value.trim();
   const pass  = document.getElementById('li-pass').value;
   const btn   = document.getElementById('li-btn');
-  const err   = document.getElementById('li-err');
   err.style.display = 'none';
   if (!email || !pass) { showErr('Please fill in both fields.'); return; }
   btn.disabled = true; btn.textContent = 'Signing in…';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Sign In';
-  if (error) { showErr(error.message || 'Invalid credentials. Please try again.'); return; }
-  await loadUserRole(data.user);
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    btn.disabled = false; btn.textContent = 'Sign In';
+
+    if (error) {
+      // Common error translations
+      const msg = error.message || '';
+      if (msg.includes('Invalid API key') || msg.includes('apikey')) {
+        showErr('Auth config error. Go to Supabase → Authentication → URL Configuration → add razik.xyz to Site URL and Redirect URLs, then try again.');
+      } else if (msg.includes('Invalid login') || msg.includes('credentials')) {
+        showErr('Wrong email or password. Please try again.');
+      } else if (msg.includes('Email not confirmed')) {
+        showErr('Please confirm your email first, or ask admin to confirm it in Supabase → Auth → Users.');
+      } else {
+        showErr(msg || 'Sign in failed. Please try again.');
+      }
+      return;
+    }
+    await loadUserRole(data.user);
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Sign In';
+    showErr('Network error. Check your connection and try again.');
+  }
 }
+function showErr(msg){ const e=document.getElementById('li-err'); e.textContent=msg; e.style.display='block'; }
 function showErr(msg){ const e=document.getElementById('li-err'); e.textContent=msg; e.style.display='block'; }
 
 async function loadUserRole(user) {
