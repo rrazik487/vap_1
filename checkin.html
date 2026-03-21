@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VAP 2026 — Check In</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#060709;--s1:#0d1014;--s2:#13171d;--border:#1f2530;--g:#00f5a0;--r:#ff3d71;--y:#ffb300;--b:#2979ff;--text:#dde4ef;--muted:#5a6578;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 70% at 50% 50%,rgba(0,245,160,0.06) 0%,transparent 70%);pointer-events:none;}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center;position:relative;z-index:1;}
+.icon{font-size:3rem;margin-bottom:1rem;display:block;animation:drop 0.5s ease;}
+@keyframes drop{from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+.state-loading .icon::after{content:'⏳';}
+.state-success .icon::after{content:'✅';}
+.state-already .icon::after{content:'👋';}
+.state-error .icon::after{content:'❌';}
+
+.day-badge{display:inline-flex;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--g);border:1px solid rgba(0,245,160,0.25);padding:0.25rem 0.7rem;border-radius:999px;margin-bottom:1.5rem;}
+.day-dot{width:6px;height:6px;background:var(--g);border-radius:50%;animation:blink 1.5s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-0.02em;margin-bottom:0.3rem;}
+.name{font-size:1.1rem;font-weight:700;color:var(--g);margin-bottom:0.2rem;}
+.usn-text{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:1.5rem;}
+.msg{font-size:0.9rem;color:var(--muted);line-height:1.5;margin-bottom:1.5rem;}
+.msg strong{color:var(--text);}
+
+.status-bar{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:1.5rem;}
+.status-fill{height:100%;width:0%;border-radius:99px;transition:width 1s ease;}
+.state-success .status-fill{width:100%;background:var(--g);}
+.state-already .status-fill{width:100%;background:var(--y);}
+.state-error .status-fill{width:100%;background:var(--r);}
+
+.att-row{display:flex;gap:0.4rem;justify-content:center;margin-bottom:1.5rem;}
+.att-pip{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--s2);font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:500;}
+.att-pip.present{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
+
+.back-btn{background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.85rem;padding:0.65rem 1.5rem;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-block;transition:all 0.2s;}
+.back-btn:hover{border-color:var(--g);color:var(--g);}
+</style>
+</head>
+<body>
+<div class="card state-loading" id="card">
+  <div class="day-badge"><div class="day-dot"></div><span id="day-label">Loading…</span></div>
+  <span class="icon" id="icon"></span>
+  <h1 id="heading">Checking in…</h1>
+  <div class="name" id="pname"></div>
+  <div class="usn-text" id="pusn"></div>
+  <div class="status-bar"><div class="status-fill" id="sfill"></div></div>
+  <p class="msg" id="msg">Please wait while we verify your registration.</p>
+  <div class="att-row" id="att-row" style="display:none"></div>
+  <a href="https://razik.xyz/vap" class="back-btn">← Back to VAP</a>
+</div>
+
+<script>
+const SB_URL='https://ymprftmrojvmuvklyjay.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NzIyMTgsImV4cCI6MjA1ODA0ODIxOH0.r7eFfUBDqM5PPhKm_dqSMD9mdGVPgPRw29MujyF6jQg';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+const DAY_DATES={'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
+const DAY_NAMES={'1':'Day 1 — 23 Mar','2':'Day 2 — 24 Mar','3':'Day 3 — 25 Mar','4':'Day 4 — 26 Mar','5':'Day 5 — 27 Mar'};
+
+function setState(state){
+  const card=document.getElementById('card');
+  card.className='card state-'+state;
+}
+
+async function checkin(){
+  const params=new URLSearchParams(window.location.search);
+  const usn=params.get('usn');
+  const forcedDay=params.get('day'); // optional override
+
+  // Figure out today's day
+  const todayStr=new Date().toISOString().split('T')[0];
+  const dayNum=forcedDay||DAY_DATES[todayStr];
+
+  document.getElementById('day-label').textContent=dayNum?DAY_NAMES[dayNum]:'VAP 2026';
+
+  if(!usn){
+    setState('error');
+    document.getElementById('heading').textContent='Invalid QR';
+    document.getElementById('msg').textContent='This QR code is missing a USN. Please contact the organizers.';
+    return;
+  }
+
+  document.getElementById('pusn').textContent=usn;
+
+  if(!dayNum){
+    setState('error');
+    document.getElementById('heading').textContent='Not an Event Day';
+    document.getElementById('msg').innerHTML='Today is not a VAP event day.<br/>Event runs <strong>23–27 March 2026</strong>.';
+    return;
+  }
+
+  // Fetch participant
+  const {data:part,error:pe}=await sb.from('vap_participants').select('*').eq('usn',usn).single();
+  if(pe||!part){
+    setState('error');
+    document.getElementById('heading').textContent='Not Registered';
+    document.getElementById('msg').innerHTML=`USN <strong>${usn}</strong> was not found in the participant list.<br/>Please check with the organizers.`;
+    return;
+  }
+
+  document.getElementById('pname').textContent=part.name||'Participant';
+  document.getElementById('pusn').textContent=part.usn||usn;
+
+  // Fetch attendance
+  const {data:attRow}=await sb.from('vap_attendance').select('*').eq('usn',usn).single();
+  const days=attRow?.days||{};
+
+  if(days[dayNum]){
+    // Already checked in
+    setState('already');
+    document.getElementById('heading').textContent='Already Checked In!';
+    document.getElementById('msg').innerHTML=`<strong>${part.name}</strong>, you're already marked present for ${DAY_NAMES[dayNum]}.`;
+    showPips(days);
+    return;
+  }
+
+  // Mark present
+  days[dayNum]=true;
+  await sb.from('vap_attendance').upsert({usn,days,updated_at:new Date().toISOString()},{onConflict:'usn'});
+
+  setState('success');
+  document.getElementById('heading').textContent='Checked In! 🎉';
+  document.getElementById('msg').innerHTML=`Welcome <strong>${part.name}</strong>!<br/>You're now marked present for <strong>${DAY_NAMES[dayNum]}</strong>.`;
+  showPips(days);
+}
+
+function showPips(days){
+  const row=document.getElementById('att-row');
+  row.style.display='flex';
+  row.innerHTML=[1,2,3,4,5].map(d=>`<div class="att-pip${days[d]?' present':''}">${d}</div>`).join('');
+}
+
+checkin();
+</script>
+</body>
+</html>
