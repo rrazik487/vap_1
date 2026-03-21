@@ -3,288 +3,359 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>VAP 2026 — Biomedical Signal Processing</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<title>VAP 2026 — Event Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
-:root {
-  --bg: #060709;
-  --s1: #0d1014;
-  --s2: #13171d;
-  --s3: #1a1f27;
-  --border: #1f2530;
-  --border2: #2a3040;
-  --g: #00f5a0;
-  --b: #2979ff;
-  --r: #ff3d71;
-  --y: #ffb300;
-  --text: #dde4ef;
-  --muted: #5a6578;
-  --muted2: #8494aa;
+:root{
+  --bg:#060709;--s1:#0d1014;--s2:#13171d;--s3:#1a1f27;
+  --border:#1f2530;--border2:#2a3040;
+  --g:#00f5a0;--b:#2979ff;--r:#ff3d71;--y:#ffb300;--p:#a855f7;
+  --text:#dde4ef;--muted:#5a6578;--muted2:#8494aa;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:0.2;pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(0,245,160,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
 
-/* GRID BG */
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
-  background-size:40px 40px;opacity:0.3;pointer-events:none;z-index:0;
-}
-body::after{
-  content:'';position:fixed;inset:0;
-  background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(0,245,160,0.07) 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
+/* ─── AUTH SCREEN ─────────────────────────────────────────────────── */
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.auth-outer{width:100%;max-width:400px;}
+.auth-brand{text-align:center;margin-bottom:2rem;}
+.auth-brand-icon{font-size:2rem;margin-bottom:0.6rem;}
+.auth-brand-name{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--g);letter-spacing:-0.02em;}
+.auth-brand-sub{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:0.2rem;}
+.auth-card{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:2rem 1.8rem;box-shadow:0 40px 80px rgba(0,0,0,0.5);}
+.auth-card h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.15rem;margin-bottom:0.25rem;}
+.auth-card-sub{font-size:0.8rem;color:var(--muted);margin-bottom:1.6rem;line-height:1.5;}
+.field{margin-bottom:1rem;}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.4rem;}
+.field input{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:0.75rem 1rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+.field input:focus{border-color:var(--g);}
+.auth-submit{width:100%;background:var(--g);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;padding:0.85rem;border:none;border-radius:9px;cursor:pointer;margin-top:0.4rem;transition:opacity 0.2s;}
+.auth-submit:hover{opacity:0.88;}
+.auth-submit:disabled{opacity:0.5;cursor:not-allowed;}
+.auth-err{background:rgba(255,61,113,0.08);border:1px solid rgba(255,61,113,0.2);border-radius:7px;padding:0.65rem 0.9rem;font-size:0.78rem;color:var(--r);margin-top:0.9rem;display:none;line-height:1.5;}
 
-/* HEADER */
-header{
-  position:sticky;top:0;z-index:200;
-  background:rgba(6,7,9,0.8);backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
-}
-.hdr{max-width:1280px;margin:0 auto;padding:0 1.5rem;height:58px;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;display:flex;align-items:center;gap:0.6rem;letter-spacing:-0.02em;}
-.logo-dot{width:8px;height:8px;background:var(--g);border-radius:50%;animation:blink 2s ease infinite;}
-@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px var(--g);}50%{opacity:0.4;box-shadow:none;}}
-.hdr-tabs{display:flex;gap:0.25rem;}
-.hdr-tab{background:none;border:1px solid transparent;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.8rem;font-weight:500;padding:0.35rem 0.9rem;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+/* ─── ROLE BADGE ─────────────────────────────────────────────────── */
+.role-badge{font-family:'DM Mono',monospace;font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:4px;letter-spacing:0.06em;font-weight:500;}
+.role-badge.admin{color:#000;background:var(--g);}
+.role-badge.volunteer{color:var(--b);background:rgba(41,121,255,0.15);border:1px solid rgba(41,121,255,0.25);}
+.role-badge.viewer{color:var(--muted);background:var(--border);border:1px solid var(--border2);}
+
+/* ─── HEADER ──────────────────────────────────────────────────────── */
+header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.hdr{max-width:1280px;margin:0 auto;padding:0 1.5rem;height:58px;display:flex;align-items:center;gap:0.8rem;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;display:flex;align-items:center;gap:0.45rem;flex-shrink:0;}
+.logo-dot{width:7px;height:7px;background:var(--g);border-radius:50%;animation:blink 2s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--g);}50%{opacity:0.3;box-shadow:none;}}
+.hdr-nav{display:flex;gap:0.2rem;flex:1;}
+.hdr-tab{background:none;border:1px solid transparent;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.78rem;font-weight:500;padding:0.3rem 0.8rem;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .hdr-tab:hover{color:var(--text);border-color:var(--border2);}
 .hdr-tab.active{background:var(--s2);border-color:var(--border2);color:var(--g);}
-.live-pill{display:flex;align-items:center;gap:0.35rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--g);border:1px solid rgba(0,245,160,0.25);padding:0.2rem 0.6rem;border-radius:999px;letter-spacing:0.08em;}
+.hdr-right{display:flex;align-items:center;gap:0.4rem;flex-shrink:0;}
+.scan-btn{background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;padding:0.3rem 0.75rem;border:none;border-radius:6px;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;}
+.scan-btn:hover{opacity:0.85;}
+.user-chip{display:flex;align-items:center;gap:0.35rem;background:var(--s2);border:1px solid var(--border2);border-radius:999px;padding:0.18rem 0.5rem 0.18rem 0.25rem;cursor:pointer;transition:border-color 0.15s;position:relative;}
+.user-chip:hover{border-color:var(--r);}
+.uavatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:0.62rem;flex-shrink:0;}
+.uavatar.admin{background:var(--g);color:#000;}
+.uavatar.volunteer{background:var(--b);color:#fff;}
+.uavatar.viewer{background:var(--muted);color:#fff;}
+.uname{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted2);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.live-pill{display:flex;align-items:center;gap:0.3rem;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--g);border:1px solid rgba(0,245,160,0.22);padding:0.18rem 0.5rem;border-radius:999px;flex-shrink:0;}
 .live-dot{width:5px;height:5px;background:var(--g);border-radius:50%;animation:blink 1.5s ease infinite;}
 
-/* PAGES */
+/* ─── PAGES ───────────────────────────────────────────────────────── */
 .page{display:none;position:relative;z-index:1;}
-.page.active{display:block;animation:fadeUp 0.3s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.page.active{display:block;animation:fadeUp 0.25s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-/* ── DASHBOARD PAGE ── */
-.dash-hero{max-width:1280px;margin:0 auto;padding:3rem 1.5rem 1.5rem;}
-.eyebrow{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--g);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.8rem;opacity:0.8;}
-.dash-hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-0.03em;line-height:1.05;margin-bottom:0.5rem;}
+/* ─── READONLY OVERLAY ────────────────────────────────────────────── */
+.readonly-notice{background:rgba(255,179,0,0.08);border-bottom:1px solid rgba(255,179,0,0.2);padding:0.5rem 1.5rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--y);text-align:center;display:none;}
+
+/* ─── DASHBOARD ───────────────────────────────────────────────────── */
+.wrap{max-width:1280px;margin:0 auto;padding:0 1.5rem;}
+.dash-hero{padding:2.5rem 0 1.2rem;}
+.eyebrow{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--g);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.7rem;}
+.dash-hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4.5vw,3rem);letter-spacing:-0.03em;line-height:1.05;margin-bottom:0.4rem;}
 .dash-hero h1 em{font-style:normal;color:var(--g);}
-.dash-sub{color:var(--muted2);font-size:0.9rem;font-weight:300;margin-bottom:2rem;}
-
-/* STAT CARDS */
-.stats{max-width:1280px;margin:0 auto;padding:0 1.5rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:2rem;}
-.stat{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;}
-.stat-l{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;}
-.stat-v{font-family:'Syne',sans-serif;font-size:1.9rem;font-weight:800;line-height:1;color:var(--g);}
-.stat-v.b{color:var(--b);}
-.stat-v.r{color:var(--r);}
-.stat-v.y{color:var(--y);}
-
-/* PROGRESS */
-.prog-wrap{max-width:1280px;margin:0 auto;padding:0 1.5rem 2rem;}
-.prog-top{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);margin-bottom:0.4rem;}
+.dash-sub{color:var(--muted2);font-size:0.85rem;font-weight:300;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:0.6rem;margin:1.5rem 0;}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;}
+.stat-l{font-family:'DM Mono',monospace;font-size:0.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;}
+.stat-v{font-family:'Syne',sans-serif;font-size:1.65rem;font-weight:800;line-height:1;color:var(--g);}
+.stat-v.b{color:var(--b);}.stat-v.r{color:var(--r);}.stat-v.y{color:var(--y);}.stat-v.p{color:var(--p);}
+.prog-wrap{margin-bottom:1.5rem;}
+.prog-top{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:0.35rem;}
 .prog-track{height:3px;background:var(--border);border-radius:99px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--g),var(--b));border-radius:99px;transition:width 0.6s ease;}
 
-/* CONTENT AREA */
-.content{max-width:1280px;margin:0 auto;padding:0 1.5rem 4rem;}
-
 /* DAY TABS */
-.day-tabs{display:flex;gap:0.4rem;overflow-x:auto;scrollbar-width:none;margin-bottom:1.5rem;padding-bottom:2px;}
+.day-tabs{display:flex;gap:0.3rem;overflow-x:auto;scrollbar-width:none;margin-bottom:1.1rem;}
 .day-tabs::-webkit-scrollbar{display:none;}
-.day-tab{flex-shrink:0;background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:600;padding:0.45rem 1rem;border-radius:8px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.day-tab{flex-shrink:0;background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'Syne',sans-serif;font-size:0.73rem;font-weight:600;padding:0.38rem 0.85rem;border-radius:7px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .day-tab:hover{border-color:var(--border2);color:var(--text);}
 .day-tab.active{background:var(--g);border-color:var(--g);color:#000;}
-
-/* DAY PANEL */
-.day-panel{display:none;}
-.day-panel.active{display:block;}
-
-.day-hdr{display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;background:var(--s1);border:1px solid var(--border);border-radius:12px;margin-bottom:1rem;}
-.day-n{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;color:var(--g);min-width:2.5rem;line-height:1;}
-.day-info{flex:1;}
-.day-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:0.1rem;}
-.day-date{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);}
-.day-prog{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--g);}
-
-/* SECTION BLOCK */
-.sec-block{margin-bottom:0.8rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--s1);}
-.sec-hdr{display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;background:var(--s2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background 0.15s;}
+.day-panel{display:none;}.day-panel.active{display:block;}
+.day-hdr{display:flex;align-items:center;gap:0.9rem;padding:0.9rem 1.1rem;background:var(--s1);border:1px solid var(--border);border-radius:10px;margin-bottom:0.8rem;}
+.day-n{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--g);min-width:2rem;line-height:1;}
+.day-info{flex:1;}.day-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;}
+.day-date{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);}
+.day-prog{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--g);}
+.sec-block{margin-bottom:0.6rem;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--s1);}
+.sec-hdr{display:flex;align-items:center;gap:0.55rem;padding:0.65rem 0.9rem;background:var(--s2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background 0.15s;}
 .sec-hdr:hover{background:var(--s3);}
-.time-tag{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--b);background:rgba(41,121,255,0.1);border:1px solid rgba(41,121,255,0.2);padding:0.18rem 0.45rem;border-radius:5px;white-space:nowrap;flex-shrink:0;}
-.sec-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.85rem;flex:1;}
-.sec-team{font-size:0.62rem;color:var(--muted);background:var(--border);padding:0.15rem 0.4rem;border-radius:4px;font-family:'DM Mono',monospace;flex-shrink:0;}
-.sec-cnt{font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--g);flex-shrink:0;}
+.time-tag{font-family:'DM Mono',monospace;font-size:0.57rem;color:var(--b);background:rgba(41,121,255,0.1);border:1px solid rgba(41,121,255,0.2);padding:0.12rem 0.38rem;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+.sec-title{font-family:'Syne',sans-serif;font-weight:600;font-size:0.8rem;flex:1;}
+.sec-team{font-size:0.57rem;color:var(--muted);background:var(--border);padding:0.1rem 0.32rem;border-radius:3px;font-family:'DM Mono',monospace;flex-shrink:0;}
+.sec-cnt{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--g);flex-shrink:0;}
 .chev{color:var(--muted);transition:transform 0.2s;flex-shrink:0;}
 .sec-hdr.coll .chev{transform:rotate(-90deg);}
-.sec-items{padding:0.4rem;display:flex;flex-direction:column;gap:0.25rem;}
-
-/* CHECK ITEM */
-.ci{display:flex;align-items:center;gap:0.7rem;padding:0.55rem 0.7rem;border-radius:7px;border:1px solid transparent;cursor:pointer;transition:all 0.15s;user-select:none;}
-.ci:hover{background:var(--s2);border-color:var(--border);}
-.ci.done{background:rgba(0,245,160,0.04);border-color:rgba(0,245,160,0.12);}
+.sec-items{padding:0.3rem;display:flex;flex-direction:column;gap:0.18rem;}
+.ci{display:flex;align-items:center;gap:0.6rem;padding:0.48rem 0.62rem;border-radius:6px;border:1px solid transparent;transition:all 0.15s;user-select:none;}
+.ci.editable{cursor:pointer;}
+.ci.editable:hover{background:var(--s2);border-color:var(--border);}
+.ci.readonly-item{cursor:default;opacity:0.8;}
+.ci.done{background:rgba(0,245,160,0.04);border-color:rgba(0,245,160,0.1);}
 .ci.done .ci-label{color:var(--muted);text-decoration:line-through;}
-.cb{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.cb{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
 .ci.done .cb{background:var(--g);border-color:var(--g);}
-.ck{opacity:0;color:#000;font-size:0.7rem;font-weight:700;transition:opacity 0.1s;}
+.ck{opacity:0;color:#000;font-size:0.62rem;font-weight:700;}
 .ci.done .ck{opacity:1;}
-.ci-label{font-size:0.82rem;flex:1;transition:all 0.15s;}
-.ci-cat{font-size:0.6rem;font-family:'DM Mono',monospace;color:var(--muted);padding:0.1rem 0.35rem;background:var(--border);border-radius:3px;flex-shrink:0;}
+.ci-label{font-size:0.78rem;flex:1;}
+.ci-cat{font-size:0.56rem;font-family:'DM Mono',monospace;padding:0.07rem 0.3rem;border-radius:3px;flex-shrink:0;}
 .ci-cat.logistics{color:var(--y);background:rgba(255,179,0,0.1);}
 .ci-cat.items{color:var(--b);background:rgba(41,121,255,0.1);}
 .ci-cat.details{color:var(--r);background:rgba(255,61,113,0.1);}
-
-/* SEARCH */
-.search-wrap{position:relative;margin-bottom:1.2rem;}
-.search-wrap svg{position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);color:var(--muted);}
-.search-inp{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:0.65rem 1rem 0.65rem 2.4rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.2s;}
+.ci-who{font-size:0.55rem;font-family:'DM Mono',monospace;color:var(--g);background:rgba(0,245,160,0.08);padding:0.06rem 0.28rem;border-radius:3px;flex-shrink:0;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none;}
+.ci-who.visible{display:block;}
+.search-wrap{position:relative;margin-bottom:1rem;}
+.search-wrap svg{position:absolute;left:0.82rem;top:50%;transform:translateY(-50%);color:var(--muted);}
+.search-inp{width:100%;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:0.58rem 1rem 0.58rem 2.2rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.82rem;outline:none;transition:border-color 0.2s;}
 .search-inp:focus{border-color:var(--g);}
 .search-inp::placeholder{color:var(--muted);}
 
-/* ── PARTICIPANTS PAGE ── */
-.part-hero{max-width:1280px;margin:0 auto;padding:2.5rem 1.5rem 1.5rem;}
-.part-hero h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-0.02em;margin-bottom:0.3rem;}
-.part-hero p{color:var(--muted2);font-size:0.88rem;}
-
-.part-controls{max-width:1280px;margin:0 auto;padding:0 1.5rem 1rem;display:flex;gap:0.7rem;flex-wrap:wrap;align-items:center;}
-.day-filter{display:flex;gap:0.35rem;flex-wrap:wrap;}
-.df-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;transition:all 0.15s;}
+/* ─── PARTICIPANTS ────────────────────────────────────────────────── */
+.page-header{padding:2.5rem 0 1rem;}
+.page-header h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-0.02em;margin-bottom:0.2rem;}
+.page-header p{color:var(--muted2);font-size:0.8rem;}
+.controls{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;}
+.df-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.63rem;padding:0.26rem 0.62rem;border-radius:5px;cursor:pointer;transition:all 0.15s;}
 .df-btn:hover{border-color:var(--border2);color:var(--text);}
 .df-btn.active{background:var(--b);border-color:var(--b);color:#fff;}
-.part-search{flex:1;min-width:180px;background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.9rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.82rem;outline:none;transition:border-color 0.2s;}
-.part-search:focus{border-color:var(--b);}
-.part-search::placeholder{color:var(--muted);}
-.sync-btn{background:var(--s2);border:1px solid var(--border2);color:var(--g);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.4rem 0.9rem;border-radius:7px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-.sync-btn:hover{background:var(--g);color:#000;}
-
-/* PARTICIPANT TABLE */
-.part-wrap{max-width:1280px;margin:0 auto;padding:0 1.5rem 4rem;overflow-x:auto;}
-.part-table{width:100%;border-collapse:separate;border-spacing:0;font-size:0.8rem;}
-.part-table th{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0.6rem 0.8rem;background:var(--s2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:58px;}
-.part-table th:first-child{border-radius:8px 0 0 0;}
-.part-table th:last-child{border-radius:0 8px 0 0;}
-.part-table td{padding:0.65rem 0.8rem;border-bottom:1px solid var(--border);vertical-align:middle;}
-.part-table tr{background:var(--s1);transition:background 0.15s;}
-.part-table tr:hover td{background:var(--s2);}
-.part-table tr.present td{background:rgba(0,245,160,0.03);}
-.usn{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted2);}
-.dept-badge{font-size:0.62rem;font-family:'DM Mono',monospace;padding:0.15rem 0.4rem;border-radius:4px;background:rgba(41,121,255,0.1);color:var(--b);border:1px solid rgba(41,121,255,0.15);}
-.att-days{display:flex;gap:0.2rem;}
-.att-pip{width:22px;height:22px;border-radius:4px;border:1px solid var(--border2);background:var(--s3);font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;font-weight:500;}
-.att-pip:hover{border-color:var(--g);color:var(--g);}
-.att-pip.present{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
-.att-pip.absent{background:rgba(255,61,113,0.1);border-color:rgba(255,61,113,0.2);color:var(--r);}
-.qr-btn{background:none;border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.6rem;padding:0.25rem 0.5rem;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.psearch{flex:1;min-width:150px;background:var(--s1);border:1px solid var(--border);border-radius:7px;padding:0.42rem 0.82rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.78rem;outline:none;transition:border-color 0.2s;}
+.psearch:focus{border-color:var(--b);}
+.psearch::placeholder{color:var(--muted);}
+.ref-btn{background:var(--s2);border:1px solid var(--border2);color:var(--g);font-family:'DM Mono',monospace;font-size:0.63rem;padding:0.35rem 0.82rem;border-radius:6px;cursor:pointer;transition:all 0.2s;}
+.ref-btn:hover{background:var(--g);color:#000;}
+.tbl-wrap{overflow-x:auto;margin-bottom:4rem;}
+.ptbl{width:100%;border-collapse:separate;border-spacing:0;font-size:0.76rem;}
+.ptbl th{font-family:'DM Mono',monospace;font-size:0.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0.52rem 0.72rem;background:var(--s2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.ptbl td{padding:0.58rem 0.72rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.ptbl tr{background:var(--s1);transition:background 0.12s;}
+.ptbl tr:hover td{background:var(--s2);}
+.usn-t{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted2);}
+.dbadge{font-size:0.57rem;font-family:'DM Mono',monospace;padding:0.1rem 0.35rem;border-radius:3px;background:rgba(41,121,255,0.1);color:var(--b);border:1px solid rgba(41,121,255,0.15);}
+.att-pips{display:flex;gap:0.16rem;}
+.apip{width:19px;height:19px;border-radius:3px;border:1px solid var(--border2);background:var(--s3);font-family:'DM Mono',monospace;font-size:0.53rem;display:flex;align-items:center;justify-content:center;font-weight:500;color:var(--muted);transition:all 0.12s;}
+.apip.clickable{cursor:pointer;}
+.apip.clickable:hover{border-color:var(--g);color:var(--g);}
+.apip.present{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
+.qr-btn{background:none;border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.57rem;padding:0.2rem 0.42rem;border-radius:4px;cursor:pointer;transition:all 0.12s;}
 .qr-btn:hover{border-color:var(--g);color:var(--g);}
-.no-data{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;}
+.no-data{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.73rem;}
 
-/* QR MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:500;display:none;align-items:center;justify-content:center;}
+/* ─── ACTIVITY LOG ────────────────────────────────────────────────── */
+.log-filters{display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:1rem;}
+.lf-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.6rem;padding:0.24rem 0.58rem;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.lf-btn:hover{border-color:var(--border2);color:var(--text);}
+.lf-btn.active{color:#000;}
+.lf-btn.active.all{background:var(--text);border-color:var(--text);}
+.lf-btn.active.checklist{background:var(--g);border-color:var(--g);}
+.lf-btn.active.attendance{background:var(--b);border-color:var(--b);}
+.lf-btn.active.login,.lf-btn.active.logout{background:var(--y);border-color:var(--y);}
+.lf-btn.active.participant{background:var(--p);border-color:var(--p);}
+.log-list{display:flex;flex-direction:column;gap:0.28rem;margin-bottom:4rem;}
+.log-item{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.9rem;display:flex;align-items:flex-start;gap:0.7rem;animation:fadeUp 0.2s ease;}
+.la{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:0.68rem;flex-shrink:0;margin-top:1px;}
+.la.admin{background:var(--g);color:#000;}
+.la.volunteer{background:var(--b);color:#fff;}
+.la.viewer{background:var(--muted);color:#fff;}
+.lb{flex:1;}
+.lb-who{font-size:0.78rem;font-weight:600;display:flex;align-items:center;gap:0.4rem;margin-bottom:0.18rem;}
+.lb-what{font-size:0.73rem;color:var(--muted2);line-height:1.4;}
+.lbadge{font-family:'DM Mono',monospace;font-size:0.55rem;padding:0.1rem 0.35rem;border-radius:3px;letter-spacing:0.04em;}
+.lbadge.checklist{color:var(--g);background:rgba(0,245,160,0.1);}
+.lbadge.attendance{color:var(--b);background:rgba(41,121,255,0.1);}
+.lbadge.login,.lbadge.logout{color:var(--y);background:rgba(255,179,0,0.1);}
+.lbadge.participant{color:var(--p);background:rgba(168,85,247,0.1);}
+.ltime{font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.log-empty{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.72rem;}
+
+/* ─── QR MODAL ────────────────────────────────────────────────────── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(10px);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem;}
 .modal-bg.open{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:2rem;max-width:340px;width:90%;text-align:center;}
-.modal h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:0.2rem;}
-.modal-sub{color:var(--muted2);font-size:0.78rem;margin-bottom:1.2rem;}
-#qr-canvas{margin:0 auto 1rem;display:block;}
-.modal-url{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);word-break:break-all;background:var(--s2);padding:0.5rem;border-radius:6px;margin-bottom:1rem;}
-.modal-close{background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.82rem;padding:0.5rem 1.2rem;border-radius:7px;cursor:pointer;}
+.modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:1.8rem;max-width:300px;width:100%;text-align:center;}
+.modal h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:0.15rem;}
+.modal-sub{color:var(--muted2);font-size:0.72rem;margin-bottom:1rem;}
+#qr-canvas{margin:0 auto 0.7rem;display:block;border-radius:8px;}
+.modal-url{font-family:'DM Mono',monospace;font-size:0.56rem;color:var(--muted);word-break:break-all;background:var(--s2);padding:0.4rem;border-radius:5px;margin-bottom:0.8rem;}
+.modal-close{background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.78rem;padding:0.42rem 1.1rem;border-radius:7px;cursor:pointer;}
 .modal-close:hover{border-color:var(--r);color:var(--r);}
 
-/* TOAST */
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--g);color:#000;font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.55rem 1rem;border-radius:8px;z-index:999;transform:translateY(60px);opacity:0;transition:all 0.3s ease;pointer-events:none;font-weight:500;}
+/* ─── TOAST ───────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s1);border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.55rem 1rem;border-radius:9px;z-index:999;transform:translateY(60px);opacity:0;transition:all 0.3s ease;pointer-events:none;max-width:260px;line-height:1.4;}
 .toast.show{transform:translateY(0);opacity:1;}
+.toast.g{border-color:rgba(0,245,160,0.4);color:var(--g);}
+.toast.b{border-color:rgba(41,121,255,0.35);color:var(--b);}
+.toast.y{border-color:rgba(255,179,0,0.35);color:var(--y);}
 
-@media(max-width:640px){
-  .hdr-tabs{display:none;}
+@media(max-width:680px){
+  .hdr-nav,.scan-btn{display:none;}
   .stats{grid-template-columns:repeat(2,1fr);}
-  .hdr{padding:0 1rem;}
-  .dash-hero,.content,.prog-wrap,.part-hero,.part-controls,.part-wrap{padding-left:1rem;padding-right:1rem;}
+  .wrap,.readonly-notice{padding-left:1rem;padding-right:1rem;}
+  #mobile-bar{display:flex!important;}
 }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="hdr">
-    <div class="logo"><div class="logo-dot"></div>VAP <span style="color:var(--muted2);font-weight:400">2026</span></div>
-    <div class="hdr-tabs">
-      <button class="hdr-tab active" onclick="showPage('dashboard')">Dashboard</button>
-      <button class="hdr-tab" onclick="showPage('participants')">Participants</button>
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-outer">
+    <div class="auth-brand">
+      <div class="auth-brand-icon">⚡</div>
+      <div class="auth-brand-name">VAP 2026</div>
+      <div class="auth-brand-sub">Evalanche Club · Staff Portal</div>
     </div>
-    <div class="live-pill"><div class="live-dot"></div>LIVE</div>
-  </div>
-</header>
-
-<!-- ══════════════ DASHBOARD PAGE ══════════════ -->
-<div class="page active" id="page-dashboard">
-  <div class="dash-hero">
-    <div class="eyebrow">ECE · Jain University · Bengaluru</div>
-    <h1>Biomedical Signal<br/><em>Processing</em> VAP</h1>
-    <p class="dash-sub">Value Added Programme · 23–27 March 2026 · Real-time Event Tracker</p>
-  </div>
-
-  <div class="stats">
-    <div class="stat"><div class="stat-l">Total Tasks</div><div class="stat-v" id="s-total">—</div></div>
-    <div class="stat"><div class="stat-l">Completed</div><div class="stat-v b" id="s-done">—</div></div>
-    <div class="stat"><div class="stat-l">Remaining</div><div class="stat-v r" id="s-rem">—</div></div>
-    <div class="stat"><div class="stat-l">Participants</div><div class="stat-v y" id="s-parts">—</div></div>
-    <div class="stat"><div class="stat-l">Today's Attendance</div><div class="stat-v" id="s-att">—</div></div>
-  </div>
-
-  <div class="prog-wrap">
-    <div class="prog-top"><span>Overall Task Progress</span><span id="pct">0%</span></div>
-    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
-  </div>
-
-  <div class="content">
-    <div class="search-wrap">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-inp" type="text" id="search-inp" placeholder="Search tasks across all days…"/>
+    <div class="auth-card">
+      <h2>Sign in to continue</h2>
+      <div class="auth-card-sub">Enter the email and password assigned to you by the event admin.</div>
+      <div class="field"><label>Email address</label><input type="email" id="li-email" placeholder="yourname@example.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="field"><label>Password</label><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button class="auth-submit" id="li-btn" onclick="doLogin()">Sign In</button>
+      <div class="auth-err" id="li-err"></div>
     </div>
-    <div class="day-tabs" id="day-tabs"></div>
-    <div id="day-panels"></div>
   </div>
 </div>
 
-<!-- ══════════════ PARTICIPANTS PAGE ══════════════ -->
-<div class="page" id="page-participants">
-  <div class="part-hero">
-    <h2>Participants</h2>
-    <p>Auto-synced from Google Form · Click day pip to toggle attendance · QR for self check-in</p>
-  </div>
-  <div class="part-controls">
-    <div class="day-filter" id="att-filter">
-      <button class="df-btn active" onclick="filterAttDay('all',this)">All Days</button>
-      <button class="df-btn" onclick="filterAttDay('1',this)">Day 1</button>
-      <button class="df-btn" onclick="filterAttDay('2',this)">Day 2</button>
-      <button class="df-btn" onclick="filterAttDay('3',this)">Day 3</button>
-      <button class="df-btn" onclick="filterAttDay('4',this)">Day 4</button>
-      <button class="df-btn" onclick="filterAttDay('5',this)">Day 5</button>
+<!-- READONLY NOTICE -->
+<div class="readonly-notice" id="readonly-notice">
+  You are signed in as <strong id="rn-role"></strong> — viewing only. Contact an admin to request edit access.
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="hdr">
+    <div class="logo"><div class="logo-dot"></div>VAP <span style="color:var(--muted2);font-weight:400;margin-left:2px;">2026</span></div>
+    <nav class="hdr-nav">
+      <button class="hdr-tab active" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="hdr-tab" onclick="showPage('participants')">Participants</button>
+      <button class="hdr-tab" onclick="showPage('activity')">Activity Log</button>
+    </nav>
+    <div class="hdr-right">
+      <button class="scan-btn" id="scan-btn-hdr" onclick="window.open('scanner.html','_blank')" style="display:none;">&#9654; Scan QR</button>
+      <div class="user-chip" onclick="showUserMenu()">
+        <div class="uavatar" id="u-avatar">?</div>
+        <span class="uname" id="u-name">...</span>
+        <span class="role-badge" id="u-rolebadge" style="margin-left:2px;"></span>
+      </div>
+      <div class="live-pill"><div class="live-dot"></div>LIVE</div>
     </div>
-    <input class="part-search" type="text" id="part-search" placeholder="Search name / USN…" oninput="renderParticipants()"/>
-    <button class="sync-btn" onclick="syncFromSheet()">⟳ Sync Sheet</button>
   </div>
-  <div class="part-wrap">
-    <table class="part-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>USN</th>
-          <th>Dept</th>
-          <th>Year</th>
-          <th>Email</th>
-          <th>Attendance (D1–D5)</th>
-          <th>QR</th>
-        </tr>
-      </thead>
-      <tbody id="part-tbody"></tbody>
-    </table>
+</header>
+
+<!-- MOBILE NAV BAR -->
+<div id="mobile-bar" style="display:none;position:sticky;top:58px;z-index:100;background:rgba(6,7,9,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);">
+  <div style="display:flex;">
+    <button onclick="showPage('dashboard')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Dashboard</button>
+    <button onclick="showPage('participants')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Participants</button>
+    <button onclick="showPage('activity')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Activity</button>
+    <button onclick="window.open('scanner.html','_blank')" id="scan-btn-mob" style="flex:1;background:none;border:none;color:var(--b);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;font-weight:600;display:none;">Scan</button>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+  <div class="wrap">
+    <div class="dash-hero">
+      <div class="eyebrow">ECE · Jain University · Bengaluru</div>
+      <h1>Biomedical Signal<br/><em>Processing</em> VAP</h1>
+      <p class="dash-sub">Value Added Programme · 23–27 March 2026 · Real-time Event Tracker</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-l">Total Tasks</div><div class="stat-v" id="s-total">—</div></div>
+      <div class="stat"><div class="stat-l">Completed</div><div class="stat-v b" id="s-done">—</div></div>
+      <div class="stat"><div class="stat-l">Remaining</div><div class="stat-v r" id="s-rem">—</div></div>
+      <div class="stat"><div class="stat-l">Participants</div><div class="stat-v y" id="s-parts">—</div></div>
+      <div class="stat"><div class="stat-l">Today Attendance</div><div class="stat-v p" id="s-att">—</div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-top"><span>Overall Progress</span><span id="pct">0%</span></div>
+      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+    <div class="search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-inp" type="text" id="search-inp" placeholder="Search tasks…"/>
+    </div>
+    <div class="day-tabs" id="day-tabs"></div>
+    <div id="day-panels" style="padding-bottom:4rem;"></div>
+  </div>
+</div>
+
+<!-- PARTICIPANTS PAGE -->
+<div class="page" id="page-participants">
+  <div class="wrap">
+    <div class="page-header">
+      <h2>Participants</h2>
+      <p>Auto-synced from Google Form · <span id="pt-role-note"></span></p>
+    </div>
+    <div class="controls">
+      <button class="df-btn active" onclick="filterDay('all',this)">All</button>
+      <button class="df-btn" onclick="filterDay('1',this)">D1</button>
+      <button class="df-btn" onclick="filterDay('2',this)">D2</button>
+      <button class="df-btn" onclick="filterDay('3',this)">D3</button>
+      <button class="df-btn" onclick="filterDay('4',this)">D4</button>
+      <button class="df-btn" onclick="filterDay('5',this)">D5</button>
+      <input class="psearch" type="text" id="pt-search" placeholder="Search name / USN…" oninput="renderPT()"/>
+      <button class="ref-btn" onclick="loadData()">&#8635; Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="ptbl">
+        <thead><tr><th>#</th><th>Name</th><th>USN</th><th>Dept</th><th>Year</th><th>Email</th><th>D1–D5</th><th>QR</th></tr></thead>
+        <tbody id="pt-body"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIVITY LOG PAGE -->
+<div class="page" id="page-activity">
+  <div class="wrap">
+    <div class="page-header">
+      <h2>Activity Log</h2>
+      <p>Every action — who did what, when, from which role</p>
+    </div>
+    <div class="log-filters">
+      <button class="lf-btn active all" onclick="filterLog('all',this)">All</button>
+      <button class="lf-btn checklist" onclick="filterLog('checklist',this)">Checklist</button>
+      <button class="lf-btn attendance" onclick="filterLog('attendance',this)">Attendance</button>
+      <button class="lf-btn login" onclick="filterLog('login',this)">Logins</button>
+      <button class="lf-btn participant" onclick="filterLog('participant',this)">Participants</button>
+    </div>
+    <div class="log-list" id="log-list"><div class="log-empty">Loading…</div></div>
   </div>
 </div>
 
 <!-- QR MODAL -->
-<div class="modal-bg" id="qr-modal" onclick="closeModal(event)">
+<div class="modal-bg" id="qr-modal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal">
     <h3 id="qr-name">—</h3>
     <p class="modal-sub" id="qr-usn">—</p>
-    <canvas id="qr-canvas" width="200" height="200"></canvas>
+    <canvas id="qr-canvas" width="180" height="180"></canvas>
     <div class="modal-url" id="qr-url"></div>
     <button class="modal-close" onclick="document.getElementById('qr-modal').classList.remove('open')">Close</button>
   </div>
@@ -293,502 +364,485 @@ header{
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════════
 const SB_URL = 'https://ymprftmrojvmuvklyjay.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NzIyMTgsImV4cCI6MjA1ODA0ODIxOH0.r7eFfUBDqM5PPhKm_dqSMD9mdGVPgPRw29MujyF6jQg';
-const BASE_URL = 'https://razik.xyz/vap';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+const BASE   = 'https://razik.xyz/vap';
+const sb     = supabase.createClient(SB_URL, SB_KEY);
 
-// ── CHECKLIST DATA ──────────────────────────────────────────────────────────
-const DAYS = [
-  { id:'pre', label:'Pre-Event', date:'Before 23 March', sections:[
-    { id:'pre_social', time:'Pre-Event', title:'Social Media & Design', team:'Design', items:[
-      {id:'p1',label:'Google Form creation',cat:'details'},
-      {id:'p2',label:'Brochure design',cat:'details'},
-      {id:'p3',label:'Banner design',cat:'details'},
-      {id:'p4',label:'Instagram reel / Story before event',cat:'details'},
-      {id:'p5',label:'Instagram stories during event (daily)',cat:'details'},
-      {id:'p6',label:'WhatsApp communication',cat:'details'},
-      {id:'p7',label:'Hard copy of certificates',cat:'items'},
-      {id:'p8',label:'Venue arrangement',cat:'logistics'},
+// ═══════════════════════════════════════════════════════════════════
+//  ROLE PERMISSIONS
+//  admin     → full access (edit checklist, attendance, view all)
+//  volunteer → edit checklist + mark attendance
+//  viewer    → read-only (no edits at all)
+// ═══════════════════════════════════════════════════════════════════
+const PERMS = {
+  admin:     { editChecklist:true,  editAttendance:true,  viewLog:true,  scanQR:true  },
+  volunteer: { editChecklist:true,  editAttendance:true,  viewLog:false, scanQR:true  },
+  viewer:    { editChecklist:false, editAttendance:false, viewLog:false, scanQR:false },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════
+let U        = { email:'', name:'', role:'viewer', perms: PERMS.viewer };
+let checked  = {}, itemMeta = {}, participants = [], attendance = {}, activeDay = 'pre';
+let allLogs  = [], logFilter = 'all';
+
+// ═══════════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const btn   = document.getElementById('li-btn');
+  const err   = document.getElementById('li-err');
+  err.style.display = 'none';
+  if (!email || !pass) { showErr('Please fill in both fields.'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Sign In';
+  if (error) { showErr(error.message || 'Invalid credentials. Please try again.'); return; }
+  await loadUserRole(data.user);
+}
+function showErr(msg){ const e=document.getElementById('li-err'); e.textContent=msg; e.style.display='block'; }
+
+async function loadUserRole(user) {
+  const { data:row } = await sb.from('vap_user_roles').select('*').eq('email', user.email).single();
+  const role = row?.role || 'viewer';
+  U = {
+    email:       user.email,
+    name:        row?.display_name || user.email.split('@')[0],
+    role,
+    perms:       PERMS[role] || PERMS.viewer,
+  };
+  onAuthed();
+}
+
+function onAuthed() {
+  document.getElementById('auth-screen').style.display = 'none';
+
+  // Header user chip
+  const initials = U.name.substring(0,2).toUpperCase();
+  const av = document.getElementById('u-avatar');
+  av.textContent = initials; av.className = 'uavatar ' + U.role;
+  document.getElementById('u-name').textContent = U.name;
+  const rb = document.getElementById('u-rolebadge');
+  rb.textContent = U.role; rb.className = 'role-badge ' + U.role;
+
+  // Viewer notice
+  if (U.role === 'viewer') {
+    const n = document.getElementById('readonly-notice');
+    document.getElementById('rn-role').textContent = 'Viewer';
+    n.style.display = 'block';
+  }
+
+  // Show/hide scan button
+  if (U.perms.scanQR) {
+    document.getElementById('scan-btn-hdr').style.display = 'block';
+    document.getElementById('scan-btn-mob').style.display = 'block';
+  }
+
+  // Mobile nav
+  if (window.innerWidth <= 680) document.getElementById('mobile-bar').style.display = 'block';
+
+  // Participants role note
+  document.getElementById('pt-role-note').textContent =
+    U.perms.editAttendance ? 'Click day pip to toggle attendance' : 'View only';
+
+  logAction('login', 'Signed in as ' + U.role);
+  showToast('Welcome, ' + U.name + '!', 'g');
+  initApp();
+}
+
+function showUserMenu() {
+  if (confirm('Signed in as ' + U.name + ' (' + U.role + ')\n\nSign out?')) doLogout();
+}
+async function doLogout() {
+  await logAction('logout', 'Signed out');
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// Resume session on refresh
+sb.auth.getSession().then(({ data:{ session } }) => {
+  if (session?.user) loadUserRole(session.user);
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOGGER
+// ═══════════════════════════════════════════════════════════════════
+async function logAction(action, detail, meta={}) {
+  try {
+    await sb.from('vap_activity_log').insert({
+      user_email: U.email, user_name: U.name, user_role: U.role,
+      action, detail, metadata: meta,
+    });
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  CHECKLIST DATA
+// ═══════════════════════════════════════════════════════════════════
+const DAYS=[
+  {id:'pre',label:'Pre-Event',date:'Before 23 March',sections:[
+    {id:'ps1',time:'Pre-Event',title:'Social Media & Design',team:'Design',items:[
+      {id:'p1',label:'Google Form creation',cat:'details'},{id:'p2',label:'Brochure design',cat:'details'},
+      {id:'p3',label:'Banner design',cat:'details'},{id:'p4',label:'Instagram reel / Story before event',cat:'details'},
+      {id:'p5',label:'Instagram stories during event (daily)',cat:'details'},{id:'p6',label:'WhatsApp communication',cat:'details'},
+      {id:'p7',label:'Hard copy of certificates',cat:'items'},{id:'p8',label:'Venue arrangement',cat:'logistics'},
     ]},
-    { id:'pre_items', time:'Pre-Event', title:'Physical Items', team:'Logistics', items:[
-      {id:'p9',label:'Banner printed',cat:'items'},
-      {id:'p10',label:'Standpole arranged',cat:'items'},
-      {id:'p11',label:'Certificates printed',cat:'items'},
+    {id:'ps2',time:'Pre-Event',title:'Physical Items',team:'Logistics',items:[
+      {id:'p9',label:'Banner printed',cat:'items'},{id:'p10',label:'Standpole arranged',cat:'items'},{id:'p11',label:'Certificates printed',cat:'items'},
     ]},
-    { id:'pre_guest', time:'Pre-Event', title:'Guest & Participant Invites', team:'Coordination', items:[
+    {id:'ps3',time:'Pre-Event',title:'Guest & Participant Invites',team:'Coordination',items:[
       {id:'p12',label:'Invitation email to guest with brochure',cat:'details'},
       {id:'p13',label:'Participant invite — 1st round (by 20 Mar)',cat:'details'},
       {id:'p14',label:'Participant invite — 2nd round (by 22 Mar)',cat:'details'},
     ]},
-    { id:'pre_photo', time:'Pre-Event', title:'Photography Setup', team:'Photo', items:[
-      {id:'p15',label:'GoPro assigned to Vaishnav',cat:'logistics'},
-      {id:'p16',label:'Google Drive folder created for daily uploads',cat:'details'},
+    {id:'ps4',time:'Pre-Event',title:'Photography Setup',team:'Photo',items:[
+      {id:'p15',label:'GoPro assigned to Vaishnav',cat:'logistics'},{id:'p16',label:'Google Drive folder created',cat:'details'},
     ]},
-    { id:'pre_hosp', time:'Pre-Event', title:'Hospitality Prep', team:'Hospitality', items:[
-      {id:'p17',label:'Crowd management plan ready',cat:'logistics'},
-      {id:'p18',label:'Memento arranged',cat:'items'},
-      {id:'p19',label:'Snacks and food sourced',cat:'items'},
-      {id:'p20',label:'Attendance sheet prepared',cat:'items'},
-      {id:'p21',label:'Guest hospitality plan finalized',cat:'logistics'},
-      {id:'p22',label:'Coffee / refreshments arranged',cat:'items'},
+    {id:'ps5',time:'Pre-Event',title:'Hospitality Prep',team:'Hospitality',items:[
+      {id:'p17',label:'Crowd management plan ready',cat:'logistics'},{id:'p18',label:'Memento arranged',cat:'items'},
+      {id:'p19',label:'Snacks and food sourced',cat:'items'},{id:'p20',label:'Attendance sheet prepared',cat:'items'},
+      {id:'p21',label:'Guest hospitality plan finalized',cat:'logistics'},{id:'p22',label:'Coffee / refreshments arranged',cat:'items'},
     ]},
   ]},
-  { id:'day1', label:'Day 1', date:'23 March 2026 · Monday', sections:[
-    { id:'d1_setup', time:'8:30–9:00 AM', title:'Stage & Branding', team:'Hosp+Tech', items:[
-      {id:'d1_1',label:'Main banner + standee setup',cat:'logistics'},
-      {id:'d1_2',label:'Dais setup',cat:'logistics'},
-      {id:'d1_3',label:'Guest hospitality ready',cat:'logistics'},
-      {id:'d1_4',label:'Lamp lighting arrangement',cat:'items'},
-      {id:'d1_5',label:'Seminar hall venue arrangement',cat:'logistics'},
-      {id:'d1_6',label:'Lamp + oil + matchbox',cat:'items'},
-      {id:'d1_7',label:'Flowers + flower pots',cat:'items'},
-      {id:'d1_8',label:'Brochures placed',cat:'items'},
-      {id:'d1_9',label:'Water bottles at dais',cat:'items'},
+  {id:'day1',label:'Day 1',date:'23 March 2026 · Monday',sections:[
+    {id:'d1s1',time:'8:30–9:00 AM',title:'Stage & Branding',team:'Hosp+Tech',items:[
+      {id:'d1_1',label:'Main banner + standee setup',cat:'logistics'},{id:'d1_2',label:'Dais setup',cat:'logistics'},
+      {id:'d1_3',label:'Guest hospitality ready',cat:'logistics'},{id:'d1_4',label:'Lamp + oil + matchbox',cat:'items'},
+      {id:'d1_5',label:'Flowers + flower pots',cat:'items'},{id:'d1_6',label:'Brochures placed',cat:'items'},
+      {id:'d1_7',label:'Water bottles at dais',cat:'items'},{id:'d1_8',label:'Seminar hall arrangement',cat:'logistics'},
     ]},
-    { id:'d1_av', time:'8:30–9:00 AM', title:'Technical & AV', team:'Tech', items:[
-      {id:'d1_10',label:'Projector system checked',cat:'items'},
-      {id:'d1_11',label:'Audio system checked',cat:'items'},
-      {id:'d1_12',label:'Internet / Wi-Fi active',cat:'items'},
-      {id:'d1_13',label:'Power strips in place',cat:'items'},
-      {id:'d1_14',label:'Camera arrangements done',cat:'items'},
-      {id:'d1_15',label:'Mic & speaker tested',cat:'items'},
-      {id:'d1_16',label:'GoPro (Vaishnav) ready',cat:'items'},
+    {id:'d1s2',time:'8:30–9:00 AM',title:'Technical & AV',team:'Tech',items:[
+      {id:'d1_9',label:'Projector checked',cat:'items'},{id:'d1_10',label:'Audio system checked',cat:'items'},
+      {id:'d1_11',label:'Wi-Fi active',cat:'items'},{id:'d1_12',label:'Power strips in place',cat:'items'},
+      {id:'d1_13',label:'Cameras ready',cat:'items'},{id:'d1_14',label:'Mic & speaker tested',cat:'items'},{id:'d1_15',label:'GoPro (Vaishnav) ready',cat:'items'},
     ]},
-    { id:'d1_open', time:'9:00–10:30 AM', title:'Blended Opening Session', team:'Hosp+Tech', items:[
-      {id:'d1_17',label:'Seating arrangement done',cat:'logistics'},
-      {id:'d1_18',label:'Presentation + anchoring prepared',cat:'details'},
-      {id:'d1_19',label:'Crowd control in place',cat:'logistics'},
-      {id:'d1_20',label:'Welcome address delivered',cat:'details'},
-      {id:'d1_21',label:'Lamp lighting done',cat:'details'},
-      {id:'d1_22',label:'Context setting done',cat:'details'},
-      {id:'d1_23',label:'Presidential address delivered',cat:'details'},
-      {id:'d1_24',label:'Keynote address delivered',cat:'details'},
-      {id:'d1_25',label:'Memento presented',cat:'items'},
+    {id:'d1s3',time:'9:00–10:30 AM',title:'Blended Opening Session',team:'Hosp+Tech',items:[
+      {id:'d1_16',label:'Seating arrangement done',cat:'logistics'},{id:'d1_17',label:'Presentation + anchoring prepared',cat:'details'},
+      {id:'d1_18',label:'Crowd control in place',cat:'logistics'},{id:'d1_19',label:'Welcome address delivered',cat:'details'},
+      {id:'d1_20',label:'Lamp lighting done',cat:'details'},{id:'d1_21',label:'Context setting done',cat:'details'},
+      {id:'d1_22',label:'Presidential address delivered',cat:'details'},{id:'d1_23',label:'Keynote address delivered',cat:'details'},{id:'d1_24',label:'Memento presented',cat:'items'},
     ]},
-    { id:'d1_brk', time:'10:30–10:45 AM', title:'Short Break', team:'Hospitality', items:[
-      {id:'d1_26',label:'Coffee served',cat:'items'},
-      {id:'d1_27',label:'Snacks served',cat:'items'},
-    ]},
-    { id:'d1_s2', time:'10:45 AM–12:30 PM', title:'Offline Session', team:'Hosp+Tech', items:[
-      {id:'d1_28',label:'Presentation running',cat:'details'},
-      {id:'d1_29',label:'Crowd attendance taken',cat:'logistics'},
-    ]},
-    { id:'d1_lunch', time:'12:30–1:30 PM', title:'Lunch Break', team:'Hospitality', items:[
-      {id:'d1_30',label:'Guest transport arranged',cat:'items'},
-      {id:'d1_31',label:'Lunch served',cat:'items'},
-    ]},
-    { id:'d1_s3', time:'1:30–3:45 PM', title:'Afternoon Session', team:'Hosp+Tech', items:[
-      {id:'d1_32',label:'Crowd attendance taken',cat:'logistics'},
-      {id:'d1_33',label:'Presentation running',cat:'details'},
-    ]},
-    { id:'d1_end', time:'3:45–4:00 PM', title:'Day 1 Conclusion', team:'Hosp+Tech', items:[
-      {id:'d1_34',label:'Token of thanks given',cat:'details'},
-      {id:'d1_35',label:'Guest certificate presented',cat:'items'},
-      {id:'d1_36',label:'Memento presented',cat:'items'},
-    ]},
+    {id:'d1s4',time:'10:30–10:45 AM',title:'Short Break',team:'Hospitality',items:[{id:'d1_25',label:'Coffee served',cat:'items'},{id:'d1_26',label:'Snacks served',cat:'items'}]},
+    {id:'d1s5',time:'10:45 AM–12:30 PM',title:'Offline Session',team:'Hosp+Tech',items:[{id:'d1_27',label:'Presentation running',cat:'details'},{id:'d1_28',label:'Crowd attendance taken',cat:'logistics'}]},
+    {id:'d1s6',time:'12:30–1:30 PM',title:'Lunch Break',team:'Hospitality',items:[{id:'d1_29',label:'Guest transport arranged',cat:'items'},{id:'d1_30',label:'Lunch served',cat:'items'}]},
+    {id:'d1s7',time:'1:30–3:45 PM',title:'Afternoon Session',team:'Hosp+Tech',items:[{id:'d1_31',label:'Crowd attendance taken',cat:'logistics'},{id:'d1_32',label:'Presentation running',cat:'details'}]},
+    {id:'d1s8',time:'3:45–4:00 PM',title:'Day 1 Conclusion',team:'Hosp+Tech',items:[{id:'d1_33',label:'Token of thanks given',cat:'details'},{id:'d1_34',label:'Guest certificate presented',cat:'items'},{id:'d1_35',label:'Memento presented',cat:'items'}]},
   ]},
-  { id:'day2', label:'Day 2', date:'24 March 2026 · Tuesday', sections:[
-    { id:'d2_setup', time:'8:30–9:00 AM', title:'Stage & Branding', team:'Hosp+Tech', items:[
-      {id:'d2_1',label:'Main banner + standee setup',cat:'logistics'},
-      {id:'d2_2',label:'Dais setup',cat:'logistics'},
-      {id:'d2_3',label:'Seminar hall arrangement',cat:'logistics'},
-    ]},
-    { id:'d2_av', time:'8:30–9:00 AM', title:'Technical & AV', team:'Tech', items:[
-      {id:'d2_4',label:'Projector, audio, Wi-Fi, power, cameras set',cat:'items'},
-      {id:'d2_5',label:'GoPro (Vaishnav) ready',cat:'items'},
-    ]},
-    { id:'d2_open', time:'9:00–10:30 AM', title:'Online Session (Morning)', team:'Tech', items:[
-      {id:'d2_6',label:'Seating + anchoring + crowd control done',cat:'logistics'},
-      {id:'d2_7',label:'Welcome address delivered',cat:'details'},
-      {id:'d2_8',label:'Cameras + speakers + projector active',cat:'items'},
-    ]},
-    { id:'d2_s2', time:'10:45 AM–12:30 PM', title:'Online Session (Late Morning)', team:'Tech', items:[
-      {id:'d2_9',label:'Presentation running',cat:'details'},
-    ]},
-    { id:'d2_af', time:'1:30–3:45 PM', title:'Ideation Round (Offline)', team:'Hosp+Tech', items:[
-      {id:'d2_10',label:'Crowd attendance taken',cat:'logistics'},
-      {id:'d2_11',label:'Ideation round setup (12 groups × 5 mins)',cat:'details'},
-      {id:'d2_12',label:'Projector + audio + cameras active',cat:'items'},
-    ]},
+  {id:'day2',label:'Day 2',date:'24 March 2026 · Tuesday',sections:[
+    {id:'d2s1',time:'8:30–9:00 AM',title:'Stage & Branding',team:'Hosp+Tech',items:[{id:'d2_1',label:'Main banner + standee setup',cat:'logistics'},{id:'d2_2',label:'Dais setup',cat:'logistics'},{id:'d2_3',label:'Seminar hall arrangement',cat:'logistics'}]},
+    {id:'d2s2',time:'8:30–9:00 AM',title:'Technical & AV',team:'Tech',items:[{id:'d2_4',label:'All AV equipment set',cat:'items'},{id:'d2_5',label:'GoPro (Vaishnav) ready',cat:'items'}]},
+    {id:'d2s3',time:'9:00–10:30 AM',title:'Online Session (Morning)',team:'Tech',items:[{id:'d2_6',label:'Seating + anchoring + crowd control done',cat:'logistics'},{id:'d2_7',label:'Welcome address delivered',cat:'details'}]},
+    {id:'d2s4',time:'1:30–3:45 PM',title:'Ideation Round (Offline)',team:'Hosp+Tech',items:[{id:'d2_8',label:'Crowd attendance taken',cat:'logistics'},{id:'d2_9',label:'Ideation round setup (12 groups x 5 mins)',cat:'details'}]},
   ]},
-  { id:'day3', label:'Day 3', date:'25 March 2026 · Wednesday', sections:[
-    { id:'d3_setup', time:'8:30–9:00 AM', title:'Stage & Branding', team:'Hosp+Tech', items:[
-      {id:'d3_1',label:'Main banner + standee + lamp + flowers setup',cat:'logistics'},
-      {id:'d3_2',label:'Brochures + water bottles ready',cat:'items'},
-    ]},
-    { id:'d3_av', time:'8:30–9:00 AM', title:'Technical & AV', team:'Tech', items:[
-      {id:'d3_3',label:'Projector, audio, Wi-Fi, power, cameras set',cat:'items'},
-      {id:'d3_4',label:'GoPro (Vaishnav) ready',cat:'items'},
-    ]},
-    { id:'d3_open', time:'9:00–10:30 AM', title:'Offline Opening Session', team:'Hosp+Tech', items:[
-      {id:'d3_5',label:'Seating + anchoring + crowd control done',cat:'logistics'},
-      {id:'d3_6',label:'Welcome + lamp lighting + keynote done',cat:'details'},
-      {id:'d3_7',label:'Memento presented',cat:'items'},
-    ]},
-    { id:'d3_brk', time:'10:30–10:45 AM', title:'Short Break', team:'Hospitality', items:[
-      {id:'d3_8',label:'Coffee + snacks served',cat:'items'},
-    ]},
-    { id:'d3_s2', time:'10:45 AM–12:30 PM', title:'Offline Session', team:'Hosp+Tech', items:[
-      {id:'d3_9',label:'Presentation running + crowd attendance',cat:'details'},
-    ]},
-    { id:'d3_lunch', time:'12:30–1:30 PM', title:'Lunch Break', team:'Hospitality', items:[
-      {id:'d3_10',label:'Guest transport + lunch arranged',cat:'items'},
-    ]},
-    { id:'d3_s3', time:'1:30–3:45 PM', title:'Afternoon Session', team:'Hosp+Tech', items:[
-      {id:'d3_11',label:'Crowd attendance + presentation running',cat:'details'},
-    ]},
-    { id:'d3_end', time:'3:45–4:00 PM', title:'Day 3 Conclusion', team:'Hosp+Tech', items:[
-      {id:'d3_12',label:'Token of thanks + guest cert + memento',cat:'items'},
-    ]},
+  {id:'day3',label:'Day 3',date:'25 March 2026 · Wednesday',sections:[
+    {id:'d3s1',time:'8:30–9:00 AM',title:'Stage & AV Setup',team:'Hosp+Tech',items:[{id:'d3_1',label:'All stage + AV setup done',cat:'logistics'},{id:'d3_2',label:'Brochures + water bottles ready',cat:'items'}]},
+    {id:'d3s2',time:'9:00–10:30 AM',title:'Offline Opening Session',team:'Hosp+Tech',items:[{id:'d3_3',label:'Seating + anchoring + crowd control',cat:'logistics'},{id:'d3_4',label:'Welcome + lamp + keynote done',cat:'details'},{id:'d3_5',label:'Memento presented',cat:'items'}]},
+    {id:'d3s3',time:'10:45 AM–3:45 PM',title:'Sessions + Lunch',team:'Hosp+Tech',items:[{id:'d3_6',label:'Morning session + attendance',cat:'details'},{id:'d3_7',label:'Guest transport + lunch',cat:'items'},{id:'d3_8',label:'Afternoon session + attendance',cat:'details'}]},
+    {id:'d3s4',time:'3:45–4:00 PM',title:'Day 3 Conclusion',team:'Hosp+Tech',items:[{id:'d3_9',label:'Token of thanks + guest cert + memento',cat:'items'}]},
   ]},
-  { id:'day4', label:'Day 4', date:'26 March 2026 · Thursday', sections:[
-    { id:'d4_setup', time:'8:30–9:00 AM', title:'Stage & Branding', team:'Hosp+Tech', items:[
-      {id:'d4_1',label:'Main banner + standee + lamp + flowers setup',cat:'logistics'},
-      {id:'d4_2',label:'Brochures + water bottles ready',cat:'items'},
-    ]},
-    { id:'d4_av', time:'8:30–9:00 AM', title:'Technical & AV', team:'Tech', items:[
-      {id:'d4_3',label:'Projector, audio, Wi-Fi, power, cameras set',cat:'items'},
-      {id:'d4_4',label:'GoPro (Vaishnav) ready',cat:'items'},
-    ]},
-    { id:'d4_open', time:'9:00–10:30 AM', title:'Blended Opening Session', team:'Hosp+Tech', items:[
-      {id:'d4_5',label:'Seating + anchoring + crowd control done',cat:'logistics'},
-      {id:'d4_6',label:'Welcome + lamp + presidential + keynote done',cat:'details'},
-      {id:'d4_7',label:'Memento presented',cat:'items'},
-    ]},
-    { id:'d4_brk', time:'10:30–10:45 AM', title:'Short Break', team:'Hospitality', items:[
-      {id:'d4_8',label:'Coffee + snacks served',cat:'items'},
-    ]},
-    { id:'d4_s2', time:'10:45 AM–12:30 PM', title:'Offline Session', team:'Hosp+Tech', items:[
-      {id:'d4_9',label:'Presentation + crowd attendance',cat:'details'},
-    ]},
-    { id:'d4_lunch', time:'12:30–1:30 PM', title:'Lunch Break', team:'Hospitality', items:[
-      {id:'d4_10',label:'Guest transport + lunch arranged',cat:'items'},
-    ]},
-    { id:'d4_s3', time:'1:30–3:45 PM', title:'Afternoon Session', team:'Hosp+Tech', items:[
-      {id:'d4_11',label:'Crowd attendance + presentation running',cat:'details'},
-    ]},
-    { id:'d4_end', time:'3:45–4:00 PM', title:'Day 4 Conclusion', team:'Hospitality', items:[
-      {id:'d4_12',label:'Token of thanks + guest cert + memento',cat:'items'},
-    ]},
+  {id:'day4',label:'Day 4',date:'26 March 2026 · Thursday',sections:[
+    {id:'d4s1',time:'8:30–9:00 AM',title:'Stage & AV Setup',team:'Hosp+Tech',items:[{id:'d4_1',label:'All stage + AV setup done',cat:'logistics'},{id:'d4_2',label:'Brochures + water bottles ready',cat:'items'}]},
+    {id:'d4s2',time:'9:00–10:30 AM',title:'Blended Opening Session',team:'Hosp+Tech',items:[{id:'d4_3',label:'Seating + anchoring + crowd control',cat:'logistics'},{id:'d4_4',label:'Welcome + lamp + keynote done',cat:'details'}]},
+    {id:'d4s3',time:'10:45 AM–3:45 PM',title:'Sessions + Lunch',team:'Hosp+Tech',items:[{id:'d4_5',label:'Sessions running + attendance',cat:'details'},{id:'d4_6',label:'Guest transport + lunch',cat:'items'}]},
+    {id:'d4s4',time:'3:45–4:00 PM',title:'Day 4 Conclusion',team:'Hospitality',items:[{id:'d4_7',label:'Token of thanks + guest cert + memento',cat:'items'}]},
   ]},
-  { id:'day5', label:'Day 5', date:'27 March 2026 · Friday', sections:[
-    { id:'d5_setup', time:'8:30–9:00 AM', title:'Stage & Branding', team:'Hosp+Tech', items:[
-      {id:'d5_1',label:'Main banner + standee + lamp + flowers setup',cat:'logistics'},
-      {id:'d5_2',label:'Brochures + water bottles ready',cat:'items'},
-    ]},
-    { id:'d5_av', time:'8:30–9:00 AM', title:'Technical & AV', team:'Tech', items:[
-      {id:'d5_3',label:'Projector, audio, Wi-Fi, power, cameras set',cat:'items'},
-      {id:'d5_4',label:'GoPro (Vaishnav) ready',cat:'items'},
-    ]},
-    { id:'d5_e1', time:'9:00–10:30 AM', title:'Project Evaluation Phase 1', team:'Hosp+Tech', items:[
-      {id:'d5_5',label:'Seating + anchoring + crowd control done',cat:'logistics'},
-      {id:'d5_6',label:'Welcome + lamp + presidential + keynote done',cat:'details'},
-      {id:'d5_7',label:'Memento presented',cat:'items'},
-    ]},
-    { id:'d5_brk', time:'10:30–10:45 AM', title:'Short Break', team:'Hospitality', items:[
-      {id:'d5_8',label:'Coffee + snacks served',cat:'items'},
-    ]},
-    { id:'d5_e2', time:'10:45 AM–12:30 PM', title:'Projects Evaluation (Blended)', team:'Tech', items:[
-      {id:'d5_9',label:'Presentation + crowd attendance running',cat:'details'},
-    ]},
-    { id:'d5_lunch', time:'12:30–1:30 PM', title:'Lunch Break', team:'Hospitality', items:[
-      {id:'d5_10',label:'Guest transport + lunch arranged',cat:'items'},
-    ]},
-    { id:'d5_val', time:'1:30–3:45 PM', title:'Valedictory & Closure', team:'Hosp+Tech', items:[
-      {id:'d5_11',label:'Crowd attendance taken',cat:'logistics'},
-      {id:'d5_12',label:'Valedictory presentation running',cat:'details'},
-      {id:'d5_13',label:'Prize distribution done',cat:'items'},
-      {id:'d5_14',label:'Participation certificates distributed',cat:'items'},
-    ]},
-    { id:'d5_end', time:'3:45–4:00 PM', title:'Final Closure', team:'Hosp+Tech', items:[
-      {id:'d5_15',label:'Token of thanks + guest cert + memento',cat:'items'},
-    ]},
+  {id:'day5',label:'Day 5',date:'27 March 2026 · Friday',sections:[
+    {id:'d5s1',time:'8:30–9:00 AM',title:'Stage & AV Setup',team:'Hosp+Tech',items:[{id:'d5_1',label:'All stage + AV setup done',cat:'logistics'},{id:'d5_2',label:'Brochures + water bottles ready',cat:'items'}]},
+    {id:'d5s2',time:'9:00–10:30 AM',title:'Project Evaluation Phase 1',team:'Hosp+Tech',items:[{id:'d5_3',label:'Seating + anchoring + crowd control',cat:'logistics'},{id:'d5_4',label:'Welcome + lamp + keynote done',cat:'details'}]},
+    {id:'d5s3',time:'10:45 AM–12:30 PM',title:'Projects Evaluation (Blended)',team:'Tech',items:[{id:'d5_5',label:'Evaluation running + attendance',cat:'details'}]},
+    {id:'d5s4',time:'1:30–3:45 PM',title:'Valedictory & Closure',team:'Hosp+Tech',items:[{id:'d5_6',label:'Crowd attendance taken',cat:'logistics'},{id:'d5_7',label:'Prize distribution done',cat:'items'},{id:'d5_8',label:'Participation certificates distributed',cat:'items'}]},
+    {id:'d5s5',time:'3:45–4:00 PM',title:'Final Closure',team:'Hosp+Tech',items:[{id:'d5_9',label:'Token of thanks + guest cert + memento',cat:'items'}]},
   ]},
 ];
 
-// ── STATE ───────────────────────────────────────────────────────────────────
-let checked = {};
-let participants = [];
-let attendance = {}; // { usn: { '1': true, '2': false, ... } }
-let activeDay = 'pre';
-let attDayFilter = 'all';
-
-// ── SUPABASE INIT ────────────────────────────────────────────────────────────
-async function initDB() {
-  // Load checklist state
-  try {
-    const {data} = await sb.from('vap_checklist').select('*').eq('id','state').single();
-    if (data) checked = data.checked || {};
-  } catch(e) {}
-
-  // Load participants
-  try {
-    const {data} = await sb.from('vap_participants').select('*').order('created_at',{ascending:true});
-    if (data) participants = data;
-  } catch(e) {}
-
-  // Load attendance
-  try {
-    const {data} = await sb.from('vap_attendance').select('*');
-    if (data) {
-      data.forEach(r => { attendance[r.usn] = r.days || {}; });
-    }
-  } catch(e) {}
-
+// ═══════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════
+async function initApp() {
   buildDashboard();
-  renderParticipants();
+  await loadData();
+  if(U.perms.viewLog) await loadLog();
+  setupRealtime();
+}
+
+async function loadData() {
+  // Checklist
+  try {
+    const {data}=await sb.from('vap_checklist').select('*').eq('id','state').single();
+    if(data){checked=data.checked||{};itemMeta=data.item_meta||{};renderAllItems();}
+  }catch(e){}
+  // Participants
+  try {
+    const {data:p}=await sb.from('vap_participants').select('*').order('created_at',{ascending:true});
+    if(p) participants=p;
+    const {data:a}=await sb.from('vap_attendance').select('*');
+    if(a){attendance={};a.forEach(r=>{attendance[r.usn]=r.days||{};});}
+    renderPT();
+  }catch(e){}
   updateStats();
+}
 
-  // Realtime — checklist
-  sb.channel('vap_cl').on('postgres_changes',{event:'*',schema:'public',table:'vap_checklist'},p=>{
-    if(p.new?.id==='state'){checked=p.new.checked||{};renderAllItems();updateStats();showToast('✓ Checklist synced');}
+// ═══════════════════════════════════════════════════════════════════
+//  REALTIME
+// ═══════════════════════════════════════════════════════════════════
+function setupRealtime(){
+  sb.channel('rt_cl').on('postgres_changes',{event:'*',schema:'public',table:'vap_checklist'},p=>{
+    if(p.new?.id==='state'){
+      const editor=p.new.last_edited_by;
+      if(editor && editor!==U.name){showToast(editor+' updated the checklist','b');}
+      checked=p.new.checked||{};itemMeta=p.new.item_meta||{};
+      renderAllItems();updateStats();
+    }
   }).subscribe();
 
-  // Realtime — participants
-  sb.channel('vap_pt').on('postgres_changes',{event:'*',schema:'public',table:'vap_participants'},p=>{
-    loadParticipants();
+  sb.channel('rt_pt').on('postgres_changes',{event:'*',schema:'public',table:'vap_participants'},()=>{
+    loadData();showToast('New participant registered!','g');
   }).subscribe();
 
-  // Realtime — attendance
-  sb.channel('vap_at').on('postgres_changes',{event:'*',schema:'public',table:'vap_attendance'},p=>{
-    if(p.new){attendance[p.new.usn]=p.new.days||{};}
-    renderParticipants();updateStats();showToast('✓ Attendance synced');
+  sb.channel('rt_att').on('postgres_changes',{event:'*',schema:'public',table:'vap_attendance'},p=>{
+    if(p.new){attendance[p.new.usn]=p.new.days||{};renderPT();updateStats();showToast('Attendance updated','b');}
+  }).subscribe();
+
+  sb.channel('rt_log').on('postgres_changes',{event:'INSERT',schema:'public',table:'vap_activity_log'},p=>{
+    if(p.new) prependLog(p.new);
   }).subscribe();
 }
 
-async function loadParticipants() {
-  const {data} = await sb.from('vap_participants').select('*').order('created_at',{ascending:true});
-  if(data){participants=data;renderParticipants();updateStats();}
-}
-
-// ── DASHBOARD BUILD ──────────────────────────────────────────────────────────
-function buildDashboard() {
-  const tabsEl = document.getElementById('day-tabs');
-  const panelsEl = document.getElementById('day-panels');
-  tabsEl.innerHTML = ''; panelsEl.innerHTML = '';
-
-  DAYS.forEach(day => {
-    const tab = document.createElement('button');
-    tab.className = 'day-tab' + (day.id===activeDay?' active':'');
-    tab.textContent = day.label;
-    tab.onclick = () => switchDay(day.id);
-    tabsEl.appendChild(tab);
-
-    const allItems = day.sections.flatMap(s=>s.items);
-    const panel = document.createElement('div');
-    panel.className = 'day-panel' + (day.id===activeDay?' active':'');
-    panel.id = 'panel-'+day.id;
-
-    panel.innerHTML = `<div class="day-hdr">
-      <div class="day-n">${day.id==='pre'?'⚡':day.id.replace('day','')}</div>
+// ═══════════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════════
+function buildDashboard(){
+  const te=document.getElementById('day-tabs'), pe=document.getElementById('day-panels');
+  te.innerHTML='';pe.innerHTML='';
+  DAYS.forEach(day=>{
+    const t=document.createElement('button');
+    t.className='day-tab'+(day.id===activeDay?' active':'');
+    t.textContent=day.label; t.onclick=()=>switchDay(day.id);
+    te.appendChild(t);
+    const allItems=day.sections.flatMap(s=>s.items);
+    const p=document.createElement('div');
+    p.className='day-panel'+(day.id===activeDay?' active':'');
+    p.id='panel-'+day.id;
+    p.innerHTML=`<div class="day-hdr">
+      <div class="day-n">${day.id==='pre'?'&#9889;':day.id.replace('day','')}</div>
       <div class="day-info"><div class="day-title">${day.label}</div><div class="day-date">${day.date}</div></div>
       <div class="day-prog" id="dprog-${day.id}">0/${allItems.length}</div>
     </div>`;
-
-    day.sections.forEach(sec => {
-      const blk = document.createElement('div');
-      blk.className = 'sec-block';
-      blk.innerHTML = `
-        <div class="sec-hdr" onclick="toggleSec('${sec.id}')">
-          <span class="time-tag">${sec.time}</span>
-          <span class="sec-title">${sec.title}</span>
-          <span class="sec-team">${sec.team}</span>
-          <span class="sec-cnt" id="sc-${sec.id}">0/${sec.items.length}</span>
-          <svg class="chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="sec-items" id="si-${sec.id}">
-          ${sec.items.map(it=>`
-            <div class="ci${checked[it.id]?' done':''}" id="ci-${it.id}" onclick="toggleItem('${it.id}')">
-              <div class="cb"><span class="ck">✓</span></div>
-              <span class="ci-label">${it.label}</span>
-              <span class="ci-cat ${it.cat}">${it.cat}</span>
-            </div>`).join('')}
-        </div>`;
-      panel.appendChild(blk);
+    day.sections.forEach(sec=>{
+      const blk=document.createElement('div');blk.className='sec-block';
+      blk.innerHTML=`<div class="sec-hdr" onclick="toggleSec('${sec.id}')">
+        <span class="time-tag">${sec.time}</span>
+        <span class="sec-title">${sec.title}</span>
+        <span class="sec-team">${sec.team}</span>
+        <span class="sec-cnt" id="sc-${sec.id}">0/${sec.items.length}</span>
+        <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="sec-items" id="si-${sec.id}">
+        ${sec.items.map(it=>{
+          const editable=U.perms.editChecklist;
+          return `<div class="ci ${editable?'editable':'readonly-item'}${checked[it.id]?' done':''}" id="ci-${it.id}" ${editable?`onclick="toggleItem('${it.id}','${it.label.replace(/'/g,"\\'")}')"`:''}> 
+            <div class="cb"><span class="ck">&#10003;</span></div>
+            <span class="ci-label">${it.label}</span>
+            <span class="ci-cat ${it.cat}">${it.cat}</span>
+            <span class="ci-who${itemMeta[it.id]?.user?' visible':''}" id="meta-${it.id}">${itemMeta[it.id]?.user||''}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+      p.appendChild(blk);
     });
-    panelsEl.appendChild(panel);
+    pe.appendChild(p);
   });
-  updateSecCounts();
+  updateCounts();
 }
 
-function switchDay(id) {
-  activeDay = id;
+function switchDay(id){
+  activeDay=id;
   document.querySelectorAll('.day-tab').forEach((t,i)=>t.classList.toggle('active',DAYS[i].id===id));
   document.querySelectorAll('.day-panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+id));
 }
-
-function toggleSec(id) {
-  const h = document.querySelector(`[onclick="toggleSec('${id}')"]`);
-  const items = document.getElementById('si-'+id);
-  const c = h.classList.toggle('coll');
-  items.style.display = c?'none':'';
+function toggleSec(id){
+  const h=document.querySelector(`[onclick="toggleSec('${id}')"]`);
+  const si=document.getElementById('si-'+id);
+  si.style.display=h.classList.toggle('coll')?'none':'';
 }
-
-async function toggleItem(id) {
-  checked[id] = !checked[id];
-  const el = document.getElementById('ci-'+id);
-  el?.classList.toggle('done', checked[id]);
-  updateSecCounts(); updateStats();
-  await sb.from('vap_checklist').upsert({id:'state',checked,updated_at:new Date().toISOString()});
+async function toggleItem(id,label){
+  if(!U.perms.editChecklist) return;
+  checked[id]=!checked[id];
+  if(checked[id]) itemMeta[id]={user:U.name,time:new Date().toISOString()};
+  else delete itemMeta[id];
+  const el=document.getElementById('ci-'+id);
+  el?.classList.toggle('done',checked[id]);
+  const me=document.getElementById('meta-'+id);
+  if(me){me.textContent=checked[id]?U.name:'';me.className='ci-who'+(checked[id]?' visible':'');}
+  updateCounts();updateStats();
+  await sb.from('vap_checklist').upsert({id:'state',checked,item_meta:itemMeta,last_edited_by:U.name,updated_at:new Date().toISOString()});
+  await logAction('checklist',(checked[id]?'Ticked: ':'Unticked: ')+label,{item_id:id});
 }
-
-function renderAllItems() {
+function renderAllItems(){
   DAYS.forEach(day=>day.sections.forEach(sec=>sec.items.forEach(it=>{
     const el=document.getElementById('ci-'+it.id);
     if(el) el.classList.toggle('done',!!checked[it.id]);
+    const me=document.getElementById('meta-'+it.id);
+    if(me){const w=itemMeta[it.id]?.user||'';me.textContent=w;me.className='ci-who'+(w?' visible':'');}
   })));
-  updateSecCounts(); updateStats();
+  updateCounts();
 }
-
-function updateSecCounts() {
+function updateCounts(){
   DAYS.forEach(day=>{
-    const allItems=day.sections.flatMap(s=>s.items);
-    const done=allItems.filter(i=>checked[i.id]).length;
-    const dp=document.getElementById('dprog-'+day.id);
-    if(dp) dp.textContent=`${done}/${allItems.length}`;
+    const all=day.sections.flatMap(s=>s.items),done=all.filter(i=>checked[i.id]).length;
+    const dp=document.getElementById('dprog-'+day.id);if(dp)dp.textContent=`${done}/${all.length}`;
     day.sections.forEach(sec=>{
       const sd=sec.items.filter(i=>checked[i.id]).length;
-      const sc=document.getElementById('sc-'+sec.id);
-      if(sc) sc.textContent=`${sd}/${sec.items.length}`;
+      const sc=document.getElementById('sc-'+sec.id);if(sc)sc.textContent=`${sd}/${sec.items.length}`;
     });
   });
 }
-
-function updateStats() {
-  const allItems=DAYS.flatMap(d=>d.sections.flatMap(s=>s.items));
-  const total=allItems.length, done=allItems.filter(i=>checked[i.id]).length;
+function updateStats(){
+  const all=DAYS.flatMap(d=>d.sections.flatMap(s=>s.items));
+  const total=all.length,done=all.filter(i=>checked[i.id]).length;
   document.getElementById('s-total').textContent=total;
   document.getElementById('s-done').textContent=done;
   document.getElementById('s-rem').textContent=total-done;
   document.getElementById('s-parts').textContent=participants.length;
-  const pct=total?Math.round(done/total*100):0;
-  document.getElementById('pct').textContent=pct+'%';
-  document.getElementById('prog-fill').style.width=pct+'%';
-
-  // today's attendance — figure out today's day number
-  const today = new Date();
-  const dayMap = {'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
-  const todayKey = today.toISOString().split('T')[0];
-  const dayNum = dayMap[todayKey];
-  if(dayNum) {
-    const attToday = Object.values(attendance).filter(d=>d[dayNum]).length;
-    document.getElementById('s-att').textContent=`${attToday}/${participants.length}`;
-  } else {
-    document.getElementById('s-att').textContent='—';
-  }
+  document.getElementById('pct').textContent=Math.round(done/total*100)+'%';
+  document.getElementById('prog-fill').style.width=Math.round(done/total*100)+'%';
+  const DM={'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
+  const dn=DM[new Date().toISOString().split('T')[0]];
+  document.getElementById('s-att').textContent=dn?`${Object.values(attendance).filter(d=>d[dn]).length}/${participants.length}`:'—';
 }
-
-// ── SEARCH ───────────────────────────────────────────────────────────────────
-document.getElementById('search-inp').addEventListener('input', function(){
-  const q=this.value.toLowerCase().trim();
-  document.querySelectorAll('.ci').forEach(el=>{
-    const label=el.querySelector('.ci-label')?.textContent.toLowerCase()||'';
-    el.style.display=(!q||label.includes(q))?'':'none';
-  });
+document.getElementById('search-inp').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.ci').forEach(el=>{el.style.display=(!q||el.querySelector('.ci-label')?.textContent.toLowerCase().includes(q))?'':'none';});
   document.querySelectorAll('.sec-block').forEach(blk=>{
-    const visible=[...blk.querySelectorAll('.ci')].some(el=>el.style.display!=='none');
-    blk.style.display=visible?'':'none';
-    if(visible&&q){
-      const items=blk.querySelector('.sec-items');
-      if(items) items.style.display='';
-      const h=blk.querySelector('.sec-hdr');
-      if(h) h.classList.remove('coll');
-    }
+    const v=[...blk.querySelectorAll('.ci')].some(e=>e.style.display!=='none');
+    blk.style.display=v?'':'none';
+    if(v&&q){const si=blk.querySelector('.sec-items');if(si)si.style.display='';blk.querySelector('.sec-hdr')?.classList.remove('coll');}
   });
 });
 
-// ── PARTICIPANTS ─────────────────────────────────────────────────────────────
-function renderParticipants() {
-  const q = (document.getElementById('part-search')?.value||'').toLowerCase();
-  const tbody = document.getElementById('part-tbody');
-  if(!tbody) return;
-
-  let list = participants.filter(p=>{
-    if(q && !`${p.name} ${p.usn}`.toLowerCase().includes(q)) return false;
-    if(attDayFilter!=='all') {
-      // show all but highlight — no filter by attendance
-    }
-    return true;
-  });
-
-  if(!list.length){
-    tbody.innerHTML=`<tr><td colspan="8" class="no-data">No participants yet. Waiting for Google Form submissions…</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = list.map((p,i)=>{
-    const att = attendance[p.usn]||{};
-    const pips = [1,2,3,4,5].map(d=>{
-      const state = att[d]===true?'present':att[d]===false?'absent':'';
-      return `<div class="att-pip ${state}" onclick="toggleAtt('${p.usn}',${d})" title="Day ${d}">${d}</div>`;
-    }).join('');
-    const isPresent = Object.values(att).some(v=>v);
-    return `<tr class="${isPresent?'present':''}">
-      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.68rem;">${i+1}</td>
-      <td style="font-weight:500;">${p.name||'—'}</td>
-      <td class="usn">${p.usn||'—'}</td>
-      <td><span class="dept-badge">${p.department||'—'}</span></td>
-      <td style="color:var(--muted2);font-size:0.78rem;">${p.year||'—'}</td>
-      <td style="color:var(--muted2);font-size:0.75rem;">${p.email||'—'}</td>
-      <td><div class="att-days">${pips}</div></td>
-      <td><button class="qr-btn" onclick="showQR('${p.usn}','${p.name?.replace(/'/g,"\\'")||''}')">QR</button></td>
+// ═══════════════════════════════════════════════════════════════════
+//  PARTICIPANTS
+// ═══════════════════════════════════════════════════════════════════
+function renderPT(){
+  const q=(document.getElementById('pt-search')?.value||'').toLowerCase();
+  const body=document.getElementById('pt-body');
+  const list=participants.filter(p=>!q||`${p.name||''} ${p.usn||''}`.toLowerCase().includes(q));
+  if(!list.length){body.innerHTML=`<tr><td colspan="8" class="no-data">${participants.length?'No results.':'No participants yet. Run syncAllExistingRows() in Apps Script.'}</td></tr>`;return;}
+  body.innerHTML=list.map((p,i)=>{
+    const att=attendance[p.usn]||{};
+    const canEdit=U.perms.editAttendance;
+    const pips=[1,2,3,4,5].map(d=>`<div class="apip${att[d]?' present':''}${canEdit?' clickable':''}" ${canEdit?`onclick="toggleAtt('${p.usn}',${d})"`:''}>${d}</div>`).join('');
+    return `<tr>
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.6rem;">${i+1}</td>
+      <td style="font-weight:500;font-size:0.8rem;">${p.name||'—'}</td>
+      <td class="usn-t">${p.usn||'—'}</td>
+      <td><span class="dbadge">${p.department||'—'}</span></td>
+      <td style="color:var(--muted2);font-size:0.73rem;">${p.year||'—'}</td>
+      <td style="color:var(--muted2);font-size:0.7rem;">${p.email||'—'}</td>
+      <td><div class="att-pips">${pips}</div></td>
+      <td><button class="qr-btn" onclick="showQR('${p.usn}','${(p.name||'').replace(/'/g,"\\'")}')">QR</button></td>
     </tr>`;
   }).join('');
 }
-
-async function toggleAtt(usn, day) {
+async function toggleAtt(usn,day){
+  if(!U.perms.editAttendance) return;
   if(!attendance[usn]) attendance[usn]={};
-  attendance[usn][day] = !attendance[usn][day];
-  renderParticipants(); updateStats();
-  await sb.from('vap_attendance').upsert({usn, days: attendance[usn], updated_at: new Date().toISOString()},{onConflict:'usn'});
+  attendance[usn][day]=!attendance[usn][day];
+  renderPT();updateStats();
+  await sb.from('vap_attendance').upsert({usn,days:attendance[usn],updated_at:new Date().toISOString()},{onConflict:'usn'});
+  const p=participants.find(x=>x.usn===usn);
+  await logAction('attendance',(attendance[usn][day]?'Marked present: ':'Removed: ')+(p?.name||usn)+' Day '+day,{usn,day});
 }
+function filterDay(d,btn){document.querySelectorAll('.df-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 
-function filterAttDay(day, btn) {
-  attDayFilter = day;
-  document.querySelectorAll('.df-btn').forEach(b=>b.classList.remove('active'));
+// ═══════════════════════════════════════════════════════════════════
+//  ACTIVITY LOG
+// ═══════════════════════════════════════════════════════════════════
+async function loadLog(){
+  const {data}=await sb.from('vap_activity_log').select('*').order('created_at',{ascending:false}).limit(200);
+  if(data) allLogs=data;
+  renderLog();
+}
+function renderLog(){
+  const list=document.getElementById('log-list');
+  const filtered=logFilter==='all'?allLogs:allLogs.filter(l=>l.action===logFilter);
+  if(!filtered.length){list.innerHTML='<div class="log-empty">No activity yet.</div>';return;}
+  list.innerHTML=filtered.map(buildLogHTML).join('');
+}
+function prependLog(item){
+  allLogs.unshift(item);
+  const list=document.getElementById('log-list');
+  if(list.querySelector('.log-empty')) list.innerHTML='';
+  list.insertAdjacentHTML('afterbegin',buildLogHTML(item));
+}
+function buildLogHTML(item){
+  const role=item.user_role||'viewer';
+  const initials=(item.user_name||'?').substring(0,2).toUpperCase();
+  const dt=new Date(item.created_at);
+  const timeStr=dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const dateStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  const actionMap={checklist:'CHECKLIST',attendance:'ATTENDANCE',login:'LOGIN',logout:'LOGOUT',participant:'PARTICIPANT'};
+  return `<div class="log-item">
+    <div class="la ${role}">${initials}</div>
+    <div class="lb">
+      <div class="lb-who">
+        ${item.user_name||item.user_email}
+        <span class="role-badge ${role}">${role}</span>
+        <span class="lbadge ${item.action}">${actionMap[item.action]||item.action.toUpperCase()}</span>
+      </div>
+      <div class="lb-what">${item.detail||'—'}</div>
+    </div>
+    <span class="ltime">${dateStr}<br/>${timeStr}</span>
+  </div>`;
+}
+function filterLog(f,btn){
+  logFilter=f;
+  document.querySelectorAll('.lf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderParticipants();
+  renderLog();
 }
 
-async function syncFromSheet() {
-  showToast('⟳ Syncing from Google Sheet…');
-  // Participants are auto-pushed by Apps Script. This just refreshes from DB.
-  await loadParticipants();
-  showToast('✓ Participants refreshed');
-}
-
-// ── QR MODAL ─────────────────────────────────────────────────────────────────
-function showQR(usn, name) {
-  const url = `${BASE_URL}/checkin.html?usn=${encodeURIComponent(usn)}`;
-  document.getElementById('qr-name').textContent = name;
-  document.getElementById('qr-usn').textContent = usn;
-  document.getElementById('qr-url').textContent = url;
-  const canvas = document.getElementById('qr-canvas');
-  QRCode.toCanvas(canvas, url, {width:200, margin:2, color:{dark:'#00f5a0',light:'#0d1014'}});
+// ═══════════════════════════════════════════════════════════════════
+//  QR MODAL
+// ═══════════════════════════════════════════════════════════════════
+function showQR(usn,name){
+  const url=`${BASE}/checkin.html?usn=${encodeURIComponent(usn)}`;
+  document.getElementById('qr-name').textContent=name;
+  document.getElementById('qr-usn').textContent=usn;
+  document.getElementById('qr-url').textContent=url;
+  QRCode.toCanvas(document.getElementById('qr-canvas'),url,{width:180,margin:2,color:{dark:'#00f5a0',light:'#0d1014'}});
   document.getElementById('qr-modal').classList.add('open');
 }
-function closeModal(e){if(e.target.id==='qr-modal') document.getElementById('qr-modal').classList.remove('open');}
 
-// ── PAGE SWITCH ───────────────────────────────────────────────────────────────
-function showPage(id) {
+// ═══════════════════════════════════════════════════════════════════
+//  PAGE SWITCH
+// ═══════════════════════════════════════════════════════════════════
+function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.hdr-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  [...document.querySelectorAll('.hdr-tab')].find(t=>t.textContent.toLowerCase().includes(id==='dashboard'?'dash':'part'))?.classList.add('active');
+  document.getElementById('page-'+id)?.classList.add('active');
+  [...document.querySelectorAll('.hdr-tab')].find(t=>t.textContent.toLowerCase().startsWith(
+    id==='dashboard'?'d':id==='participants'?'p':'a'
+  ))?.classList.add('active');
+  if(id==='activity'&&U.perms.viewLog) loadLog();
 }
 
-// ── TOAST ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════════════
 let _tt;
-function showToast(msg){
+function showToast(msg,type=''){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),2200);
+  t.textContent=msg;t.className='toast show '+(type||'');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);
 }
-
-// ── BOOT ─────────────────────────────────────────────────────────────────────
-initDB();
 </script>
 </body>
 </html>

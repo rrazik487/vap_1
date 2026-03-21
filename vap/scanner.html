@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VAP 2026 — QR Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--bg:#060709;--s1:#0d1014;--s2:#13171d;--border:#1f2530;--border2:#2a3040;--g:#00f5a0;--r:#ff3d71;--y:#ffb300;--b:#2979ff;--text:#dde4ef;--muted:#5a6578;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:1rem;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(41,121,255,0.06) 0%,transparent 70%);pointer-events:none;}
+
+header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;position:relative;z-index:1;}
+.back-btn{background:var(--s1);border:1px solid var(--border2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.82rem;padding:0.4rem 0.9rem;border-radius:7px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+.back-btn:hover{border-color:var(--g);color:var(--g);}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;}
+.day-badge{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--g);border:1px solid rgba(0,245,160,0.25);padding:0.2rem 0.6rem;border-radius:999px;}
+
+/* DAY SELECTOR */
+.day-select-wrap{width:100%;max-width:480px;margin-bottom:1rem;position:relative;z-index:1;}
+.day-select-label{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.4rem;}
+.day-select{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:8px;padding:0.6rem 1rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.85rem;outline:none;cursor:pointer;}
+
+/* SCANNER */
+.scanner-wrap{width:100%;max-width:480px;position:relative;z-index:1;}
+.scanner-box{background:var(--s1);border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:1rem;position:relative;}
+#qr-reader{width:100%;}
+#qr-reader video{border-radius:0!important;}
+.scanner-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.scanner-frame{width:200px;height:200px;border:2px solid var(--g);border-radius:12px;box-shadow:0 0 0 9999px rgba(6,7,9,0.5);animation:scan-pulse 2s ease infinite;}
+@keyframes scan-pulse{0%,100%{box-shadow:0 0 0 9999px rgba(6,7,9,0.5),0 0 0 0 rgba(0,245,160,0.4);}50%{box-shadow:0 0 0 9999px rgba(6,7,9,0.5),0 0 0 8px rgba(0,245,160,0);}}
+.scan-line{position:absolute;width:180px;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);animation:scan-line 2s ease infinite;}
+@keyframes scan-line{0%{top:calc(50% - 90px);}50%{top:calc(50% + 90px);}100%{top:calc(50% - 90px);}}
+
+.start-btn{width:100%;background:var(--b);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;padding:1rem;border:none;border-radius:10px;cursor:pointer;transition:opacity 0.2s;margin-bottom:1rem;}
+.start-btn:hover{opacity:0.85;}
+.stop-btn{width:100%;background:var(--s2);color:var(--r);font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;padding:0.8rem;border:1px solid rgba(255,61,113,0.3);border-radius:10px;cursor:pointer;transition:all 0.2s;margin-bottom:1rem;display:none;}
+.stop-btn:hover{background:rgba(255,61,113,0.1);}
+
+/* RESULT CARD */
+.result-card{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:14px;padding:1.5rem;text-align:center;margin-bottom:1rem;display:none;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.result-icon{font-size:2.5rem;margin-bottom:0.8rem;font-family:'Syne',sans-serif;font-weight:800;}
+.result-status{font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.8rem;}
+.result-status.success{color:var(--g);}
+.result-status.already{color:var(--y);}
+.result-status.error{color:var(--r);}
+.result-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:0.2rem;}
+.result-usn{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:1rem;}
+.att-pips{display:flex;justify-content:center;gap:0.4rem;margin-bottom:1rem;}
+.att-pip{width:32px;height:32px;border-radius:6px;border:1px solid var(--border2);background:var(--s2);font-family:'DM Mono',monospace;font-size:0.7rem;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--muted);}
+.att-pip.present{background:var(--g);border-color:var(--g);color:#000;}
+.result-msg{font-size:0.85rem;color:var(--muted);line-height:1.5;}
+.scan-next-btn{width:100%;background:var(--g);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;padding:0.75rem;border:none;border-radius:8px;cursor:pointer;margin-top:1rem;transition:opacity 0.2s;}
+.scan-next-btn:hover{opacity:0.85;}
+
+/* HISTORY */
+.history-wrap{width:100%;max-width:480px;position:relative;z-index:1;}
+.history-title{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.6rem;}
+.history-list{display:flex;flex-direction:column;gap:0.35rem;max-height:240px;overflow-y:auto;}
+.history-item{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;}
+.hi-name{font-weight:500;}
+.hi-usn{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);}
+.hi-status{font-family:'DM Mono',monospace;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:4px;}
+.hi-status.success{color:var(--g);background:rgba(0,245,160,0.1);}
+.hi-status.already{color:var(--y);background:rgba(255,179,0,0.1);}
+.hi-status.error{color:var(--r);background:rgba(255,61,113,0.1);}
+.empty-history{text-align:center;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.75rem;padding:1.5rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="back-btn">&#8592; Back</a>
+  <div class="page-title">QR Scanner</div>
+  <div class="day-badge" id="day-badge">Loading…</div>
+</header>
+
+<div class="day-select-wrap">
+  <div class="day-select-label">Scanning for:</div>
+  <select class="day-select" id="day-select" onchange="updateDayBadge()">
+    <option value="1">Day 1 — 23 March 2026</option>
+    <option value="2">Day 2 — 24 March 2026</option>
+    <option value="3">Day 3 — 25 March 2026</option>
+    <option value="4">Day 4 — 26 March 2026</option>
+    <option value="5">Day 5 — 27 March 2026</option>
+  </select>
+</div>
+
+<div class="scanner-wrap">
+  <div class="scanner-box" id="scanner-box" style="display:none;">
+    <div id="qr-reader"></div>
+    <div class="scanner-overlay">
+      <div style="position:relative;">
+        <div class="scanner-frame"></div>
+        <div class="scan-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="start-btn" onclick="startScanner()">&#9654; Start Camera Scanner</button>
+  <button class="stop-btn" id="stop-btn" onclick="stopScanner()">&#9632; Stop Scanner</button>
+
+  <!-- Result -->
+  <div class="result-card" id="result-card">
+    <div class="result-icon" id="result-icon"></div>
+    <div class="result-status" id="result-status"></div>
+    <div class="result-name" id="result-name"></div>
+    <div class="result-usn" id="result-usn"></div>
+    <div class="att-pips" id="att-pips"></div>
+    <div class="result-msg" id="result-msg"></div>
+    <button class="scan-next-btn" onclick="scanNext()">Scan Next Person</button>
+  </div>
+</div>
+
+<div class="history-wrap">
+  <div class="history-title">Scanned Today</div>
+  <div class="history-list" id="history-list">
+    <div class="empty-history">No scans yet</div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://ymprftmrojvmuvklyjay.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI0NzIyMTgsImV4cCI6MjA1ODA0ODIxOH0.r7eFfUBDqM5PPhKm_dqSMD9mdGVPgPRw29MujyF6jQg';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const DAY_DATES = {'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
+let html5QrcodeScanner = null;
+let isProcessing = false;
+let scanHistory = [];
+let selectedDay = '1';
+
+// Auto-detect today's day
+function initDay() {
+  const today = new Date().toISOString().split('T')[0];
+  const detected = DAY_DATES[today];
+  const sel = document.getElementById('day-select');
+  if (detected) {
+    sel.value = detected;
+  }
+  updateDayBadge();
+}
+
+function updateDayBadge() {
+  selectedDay = document.getElementById('day-select').value;
+  const labels = {'1':'Day 1 · 23 Mar','2':'Day 2 · 24 Mar','3':'Day 3 · 25 Mar','4':'Day 4 · 26 Mar','5':'Day 5 · 27 Mar'};
+  document.getElementById('day-badge').textContent = labels[selectedDay] || 'Day '+selectedDay;
+}
+
+function startScanner() {
+  document.getElementById('scanner-box').style.display = 'block';
+  document.getElementById('start-btn').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'block';
+  document.getElementById('result-card').style.display = 'none';
+
+  html5QrcodeScanner = new Html5Qrcode("qr-reader");
+  html5QrcodeScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 200, height: 200 }, aspectRatio: 1.0 },
+    onScanSuccess,
+    () => {} // ignore errors
+  ).catch(err => {
+    alert('Camera error: ' + err + '\n\nMake sure you allow camera access.');
+    stopScanner();
+  });
+}
+
+function stopScanner() {
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.stop().catch(()=>{});
+    html5QrcodeScanner = null;
+  }
+  document.getElementById('scanner-box').style.display = 'none';
+  document.getElementById('start-btn').style.display = 'block';
+  document.getElementById('stop-btn').style.display = 'none';
+}
+
+async function onScanSuccess(decodedText) {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  // Pause scanner while processing
+  if (html5QrcodeScanner) {
+    try { await html5QrcodeScanner.pause(); } catch(e) {}
+  }
+
+  // Extract USN from URL
+  let usn = '';
+  try {
+    const url = new URL(decodedText);
+    usn = url.searchParams.get('usn') || decodedText;
+  } catch(e) {
+    // Not a URL — use as-is (direct USN)
+    usn = decodedText.trim().toUpperCase();
+  }
+
+  await processCheckin(usn);
+}
+
+async function processCheckin(usn) {
+  if (!usn) {
+    showResult('error', '✗', 'INVALID QR', '', '', {}, 'This QR code is missing a USN.');
+    return;
+  }
+
+  // Fetch participant
+  const {data:part, error:pe} = await sb.from('vap_participants').select('*').eq('usn', usn).single();
+  if (pe || !part) {
+    showResult('error', '✗', 'NOT REGISTERED', usn, '', {}, `USN "${usn}" not found. Please check with organizers.`);
+    addHistory(usn, usn, 'error');
+    return;
+  }
+
+  // Fetch attendance
+  const {data:attRow} = await sb.from('vap_attendance').select('*').eq('usn', usn).single();
+  const days = attRow?.days || {};
+
+  if (days[selectedDay]) {
+    showResult('already', '✓', 'ALREADY CHECKED IN', part.name, usn, days,
+      `${part.name} is already marked present for Day ${selectedDay}.`);
+    addHistory(part.name, usn, 'already');
+    return;
+  }
+
+  // Mark present
+  days[selectedDay] = true;
+  await sb.from('vap_attendance').upsert({usn, days, updated_at: new Date().toISOString()}, {onConflict:'usn'});
+
+  showResult('success', '✓', 'CHECKED IN!', part.name, usn, days,
+    `${part.name} is now marked present for Day ${selectedDay}.`);
+  addHistory(part.name, usn, 'success');
+}
+
+function showResult(type, icon, status, name, usn, days, msg) {
+  const colors = {success:'#00f5a0', already:'#ffb300', error:'#ff3d71'};
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('result-icon').textContent = icon;
+  document.getElementById('result-icon').style.color = colors[type];
+  const sEl = document.getElementById('result-status');
+  sEl.textContent = status; sEl.className = 'result-status '+type;
+  document.getElementById('result-name').textContent = name || '—';
+  document.getElementById('result-usn').textContent = usn || '—';
+  document.getElementById('result-msg').textContent = msg;
+
+  // Attendance pips
+  const pips = document.getElementById('att-pips');
+  pips.innerHTML = [1,2,3,4,5].map(d=>
+    `<div class="att-pip${days[d]?' present':''}">${d}</div>`
+  ).join('');
+}
+
+function scanNext() {
+  isProcessing = false;
+  document.getElementById('result-card').style.display = 'none';
+  if (html5QrcodeScanner) {
+    try { html5QrcodeScanner.resume(); } catch(e) { startScanner(); }
+  } else {
+    startScanner();
+  }
+}
+
+function addHistory(name, usn, status) {
+  scanHistory.unshift({name, usn, status, time: new Date().toLocaleTimeString()});
+  const list = document.getElementById('history-list');
+  list.innerHTML = scanHistory.map(h=>`
+    <div class="history-item">
+      <div><div class="hi-name">${h.name}</div><div class="hi-usn">${h.usn} · ${h.time}</div></div>
+      <span class="hi-status ${h.status}">${h.status==='success'?'Checked In':h.status==='already'?'Already In':'Error'}</span>
+    </div>`).join('');
+}
+
+initDay();
+</script>
+</body>
+</html>
