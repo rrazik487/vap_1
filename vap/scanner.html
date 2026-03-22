@@ -88,6 +88,12 @@ header{width:100%;max-width:480px;display:flex;align-items:center;justify-conten
     <option value="4">Day 4 — 26 March 2026</option>
     <option value="5">Day 5 — 27 March 2026</option>
   </select>
+  <div class="day-select-label" style="margin-top:0.7rem;">Session:</div>
+  <select class="day-select" id="session-select" onchange="updateDayBadge()">
+    <option value="M">Morning — 9:00 AM</option>
+    <option value="11">Mid-morning — 11:00 AM</option>
+    <option value="PM">Post-lunch — 2:00 PM</option>
+  </select>
 </div>
 
 <div class="scanner-wrap">
@@ -133,22 +139,31 @@ let html5QrcodeScanner = null;
 let isProcessing = false;
 let scanHistory = [];
 let selectedDay = '1';
+let selectedSession = 'M';
 
 // Auto-detect today's day
 function initDay() {
   const today = new Date().toISOString().split('T')[0];
   const detected = DAY_DATES[today];
   const sel = document.getElementById('day-select');
-  if (detected) {
-    sel.value = detected;
-  }
+  if (detected) sel.value = detected;
+
+  // Auto-detect session based on current time (IST)
+  const now = new Date();
+  const hour = now.getHours();
+  const sessSel = document.getElementById('session-select');
+  if (hour < 10) sessSel.value = 'M';       // before 10AM → Morning
+  else if (hour < 13) sessSel.value = '11'; // 10AM–1PM → Mid-morning
+  else sessSel.value = 'PM';                 // after 1PM → Post-lunch
   updateDayBadge();
 }
 
 function updateDayBadge() {
   selectedDay = document.getElementById('day-select').value;
-  const labels = {'1':'Day 1 · 23 Mar','2':'Day 2 · 24 Mar','3':'Day 3 · 25 Mar','4':'Day 4 · 26 Mar','5':'Day 5 · 27 Mar'};
-  document.getElementById('day-badge').textContent = labels[selectedDay] || 'Day '+selectedDay;
+  selectedSession = document.getElementById('session-select').value;
+  const dlabels = {'1':'Day 1','2':'Day 2','3':'Day 3','4':'Day 4','5':'Day 5'};
+  const slabels = {'M':'Morning 9AM','11':'Mid-morning 11AM','PM':'Post-lunch 2PM'};
+  document.getElementById('day-badge').textContent = (dlabels[selectedDay]||'Day '+selectedDay) + ' · ' + (slabels[selectedSession]||selectedSession);
 }
 
 function startScanner() {
@@ -198,10 +213,11 @@ async function onScanSuccess(decodedText) {
     usn = decodedText.trim().toUpperCase();
   }
 
-  await processCheckin(usn);
+  await processCheckin(usn, selectedSession);
 }
 
-async function processCheckin(usn) {
+async function processCheckin(usn, session) {
+  session = session || 'M';
   if (!usn) {
     showResult('error', '✗', 'INVALID QR', '', '', {}, 'This QR code is missing a USN.');
     return;

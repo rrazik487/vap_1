@@ -159,10 +159,16 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 .ptbl tr:hover td{background:var(--s2);}
 .usn-t{font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted2);}
 .dbadge{font-size:0.57rem;font-family:'DM Mono',monospace;padding:0.1rem 0.35rem;border-radius:3px;background:rgba(41,121,255,0.1);color:var(--b);border:1px solid rgba(41,121,255,0.15);}
-.att-pips{display:flex;gap:0.16rem;}
-.apip{width:19px;height:19px;border-radius:3px;border:1px solid var(--border2);background:var(--s3);font-family:'DM Mono',monospace;font-size:0.53rem;display:flex;align-items:center;justify-content:center;font-weight:500;color:var(--muted);transition:all 0.12s;}
+.att-pips{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.day-group{display:flex;flex-direction:column;gap:0.1rem;align-items:center;}
+.day-group-label{font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--muted);text-align:center;}
+.day-sessions{display:flex;gap:0.1rem;}
+.apip{width:16px;height:16px;border-radius:3px;border:1px solid var(--border2);background:var(--s3);font-family:'DM Mono',monospace;font-size:0.42rem;display:flex;align-items:center;justify-content:center;font-weight:500;color:var(--muted);transition:all 0.12s;line-height:1;}
 .apip.clickable{cursor:pointer;}
 .apip.clickable:hover{border-color:var(--g);color:var(--g);}
+.apip.morning.present{background:var(--b);border-color:var(--b);color:#fff;font-weight:700;}
+.apip.midday.present{background:var(--y);border-color:var(--y);color:#000;font-weight:700;}
+.apip.afternoon.present{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
 .apip.present{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
 .qr-btn{background:none;border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.57rem;padding:0.2rem 0.42rem;border-radius:4px;cursor:pointer;transition:all 0.12s;}
 .qr-btn:hover{border-color:var(--g);color:var(--g);}
@@ -233,7 +239,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
     </div>
     <div class="auth-card">
       <h2>Enter your access code</h2>
-      <div class="auth-card-sub">Type your ID number and PIN given by the event admin.</div>
+      <div class="auth-card-sub">Type your ID number and PIN given by the event coordinator.</div>
       <div class="field">
         <label>User ID</label>
         <input type="text" id="li-uid" placeholder="e.g. 1001" maxlength="10"
@@ -338,7 +344,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
     </div>
     <div class="tbl-wrap">
       <table class="ptbl">
-        <thead><tr><th>#</th><th>Name</th><th>USN</th><th>Dept</th><th>Year</th><th>Email</th><th>D1–D5</th><th>QR</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>USN</th><th>Dept</th><th>Year</th><th>Email</th><th>Attendance (D1–D5 · M/11/PM)</th><th>QR</th></tr></thead>
         <tbody id="pt-body"><tr><td colspan="8" class="no-data">Loading…</td></tr></tbody>
       </table>
     </div>
@@ -762,7 +768,17 @@ function updateStats(){
   document.getElementById('prog-fill').style.width=Math.round(done/total*100)+'%';
   const DM={'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
   const dn=DM[new Date().toISOString().split('T')[0]];
-  document.getElementById('s-att').textContent=dn?`${Object.values(attendance).filter(d=>d[dn]).length}/${participants.length}`:'—';
+  if(dn){
+    // Count participants present in ANY session of today
+    const todayPresent=Object.values(attendance).filter(d=>d[dn+'-M']||d[dn+'-11']||d[dn+'-PM']).length;
+    const morn=Object.values(attendance).filter(d=>d[dn+'-M']).length;
+    const mid=Object.values(attendance).filter(d=>d[dn+'-11']).length;
+    const aft=Object.values(attendance).filter(d=>d[dn+'-PM']).length;
+    document.getElementById('s-att').textContent=`${todayPresent}/${participants.length}`;
+    document.getElementById('s-att').title=`Morning:${morn} | 11AM:${mid} | PM:${aft}`;
+  } else {
+    document.getElementById('s-att').textContent='—';
+  }
 }
 document.getElementById('search-inp').addEventListener('input',function(){
   const q=this.value.toLowerCase();
@@ -785,7 +801,16 @@ function renderPT(){
   body.innerHTML=list.map((p,i)=>{
     const att=attendance[p.usn]||{};
     const canEdit=U.perms.editAttendance;
-    const pips=[1,2,3,4,5].map(d=>`<div class="apip${att[d]?' present':''}${canEdit?' clickable':''}" ${canEdit?`onclick="toggleAtt('${p.usn}',${d})"`:''}>${d}</div>`).join('');
+    const SESSIONS=[{key:'M',label:'M',cls:'morning'},{key:'11',label:'11',cls:'midday'},{key:'PM',label:'PM',cls:'afternoon'}];
+    const pips=[1,2,3,4,5].map(d=>{
+      const sess=SESSIONS.map(s=>{
+        const isPresent=att[d+'-'+s.key];
+        const cl=`apip ${s.cls}${isPresent?' present':''}${canEdit?' clickable':''}`;
+        const click=canEdit?`onclick="toggleAtt('${p.usn}',${d},'${s.key}')"` :'';
+        return `<div class="${cl}" title="Day ${d} ${s.label}" ${click}>${s.label}</div>`;
+      }).join('');
+      return `<div class="day-group"><div class="day-sessions">${sess}</div><div class="day-group-label">D${d}</div></div>`;
+    }).join('');
     return `<tr>
       <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.6rem;">${i+1}</td>
       <td style="font-weight:500;font-size:0.8rem;">${p.name||'—'}</td>
@@ -798,14 +823,16 @@ function renderPT(){
     </tr>`;
   }).join('');
 }
-async function toggleAtt(usn,day){
+async function toggleAtt(usn,day,session){
   if(!U.perms.editAttendance) return;
   if(!attendance[usn]) attendance[usn]={};
-  attendance[usn][day]=!attendance[usn][day];
+  const key=day+'-'+session;
+  attendance[usn][key]=!attendance[usn][key];
   renderPT();updateStats();
   await sb.from('vap_attendance').upsert({usn,days:attendance[usn],updated_at:new Date().toISOString()},{onConflict:'usn'});
-  const p=participants.find(x=>x.usn===usn);
-  await logAction('attendance',(attendance[usn][day]?'Marked present: ':'Removed: ')+(p?.name||usn)+' Day '+day,{usn,day});
+  const pp=participants.find(x=>x.usn===usn);
+  const sessionLabel={'M':'Morning (9AM)','11':'Mid-morning (11AM)','PM':'Post-lunch (2PM)'}[session]||session;
+  await logAction('attendance',(attendance[usn][key]?'Marked present: ':'Removed: ')+(pp?.name||usn)+' Day '+day+' '+sessionLabel,{usn,day,session});
 }
 function filterDay(d,btn){document.querySelectorAll('.df-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 

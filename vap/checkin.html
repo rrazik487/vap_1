@@ -69,7 +69,12 @@ async function checkin() {
   const usn = params.get('usn');
   const forcedDay = params.get('day');
   const todayStr = new Date().toISOString().split('T')[0];
-  const dayNum = forcedDay || DAY_DATES[todayStr] || '1'; // default Day 1 if no match (for testing)
+  const forceSession = params.get('session');
+  const dayNum = forcedDay || DAY_DATES[todayStr] || '1';
+  // Auto-detect session based on time
+  const nowHour = new Date().getHours();
+  const autoSession = forceSession || (nowHour < 10 ? 'M' : nowHour < 13 ? '11' : 'PM');
+  const sessionLabel = {'M':'Morning (9AM)','11':'Mid-morning (11AM)','PM':'Post-lunch (2PM)'}[autoSession]||autoSession;
 
   document.getElementById('day-label').textContent = DAY_NAMES[dayNum] || 'VAP 2026';
 
@@ -101,23 +106,24 @@ async function checkin() {
   const {data:attRow} = await sb.from('vap_attendance').select('*').eq('usn', usn).single();
   const days = attRow?.days || {};
 
-  if (days[dayNum]) {
+  const attKey = dayNum + '-' + autoSession;
+  if (days[attKey]) {
     setState('already','var(--y)');
     document.getElementById('big-icon').textContent = '✓';
     document.getElementById('heading').textContent = 'Already Checked In!';
-    document.getElementById('msg').innerHTML = `<strong>${part.name}</strong>, you're already marked present for ${DAY_NAMES[dayNum]}.`;
+    document.getElementById('msg').innerHTML = `<strong>${part.name}</strong>, you're already marked for <strong>${DAY_NAMES[dayNum]} ${sessionLabel}</strong>.`;
     showPips(days);
     return;
   }
 
   // Mark present
-  days[dayNum] = true;
+  days[attKey] = true;
   await sb.from('vap_attendance').upsert({usn, days, updated_at: new Date().toISOString()}, {onConflict:'usn'});
 
   setState('success','var(--g)');
   document.getElementById('big-icon').textContent = '✓';
   document.getElementById('heading').textContent = 'Checked In!';
-  document.getElementById('msg').innerHTML = `Welcome <strong>${part.name}</strong>!<br/>Marked present for <strong>${DAY_NAMES[dayNum]}</strong>.`;
+  document.getElementById('msg').innerHTML = `Welcome <strong>${part.name}</strong>!<br/>Marked present for <strong>${DAY_NAMES[dayNum]} ${sessionLabel}</strong>.`;
   showPips(days);
 }
 
