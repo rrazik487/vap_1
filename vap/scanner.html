@@ -212,6 +212,8 @@ async function onScanSuccess(decodedText) {
     // Not a URL — use as-is (direct USN)
     usn = decodedText.trim().toUpperCase();
   }
+  // Strip any vol token from scanned URL — we add it fresh
+  usn = usn.replace(/[?&]vol=[^&]*/,'').trim();
 
   await processCheckin(usn, selectedSession);
 }

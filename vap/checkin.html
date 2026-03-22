@@ -27,6 +27,7 @@ h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing
 .state-already .status-fill{width:100%;background:var(--y);}
 .state-error .status-fill{width:100%;background:var(--r);}
 .state-loading .status-fill{width:60%;background:var(--b);animation:loading-bar 1s ease infinite alternate;}
+.state-info .status-fill{width:100%;background:var(--b);}
 @keyframes loading-bar{from{width:30%;}to{width:70%;}}
 .att-row{display:flex;gap:0.4rem;justify-content:center;margin-bottom:1.5rem;}
 .att-pip{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--s2);font-family:'DM Mono',monospace;font-size:0.72rem;display:flex;align-items:center;justify-content:center;font-weight:500;color:var(--muted);}
@@ -69,12 +70,32 @@ async function checkin() {
   const usn = params.get('usn');
   const forcedDay = params.get('day');
   const todayStr = new Date().toISOString().split('T')[0];
+  // VOLUNTEER-ONLY: requires ?vol=vap2026 in URL
+  // Without this token, show info page only — no check-in
+  const volToken = params.get('vol');
+  const VOLUNTEER_TOKEN = 'vap2026'; // same as admin PIN
+
   const forceSession = params.get('session');
   const dayNum = forcedDay || DAY_DATES[todayStr] || '1';
-  // Auto-detect session based on time
   const nowHour = new Date().getHours();
   const autoSession = forceSession || (nowHour < 10 ? 'M' : nowHour < 13 ? '11' : 'PM');
   const sessionLabel = {'M':'Morning (9AM)','11':'Mid-morning (11AM)','PM':'Post-lunch (2PM)'}[autoSession]||autoSession;
+
+  // If no volunteer token — show info card, no check-in
+  if (volToken !== VOLUNTEER_TOKEN) {
+    setState('info','var(--b)');
+    document.getElementById('big-icon').textContent = 'i';
+    document.getElementById('big-icon').style.fontFamily = 'serif';
+    document.getElementById('heading').textContent = 'Your QR Code';
+    document.getElementById('pname').textContent = '';
+    document.getElementById('pusn').textContent = usn || '';
+    document.getElementById('pdept').textContent = '';
+    document.getElementById('msg').innerHTML =
+      'Please <strong>show this page to the volunteer</strong> at the entrance.<br/>' +
+      'They will scan your QR code to mark your attendance.<br/><br/>' +
+      '<span style="color:var(--muted);font-size:0.8rem;">Self check-in is not permitted.</span>';
+    return;
+  }
 
   document.getElementById('day-label').textContent = DAY_NAMES[dayNum] || 'VAP 2026';
 

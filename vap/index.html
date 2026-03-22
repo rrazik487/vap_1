@@ -887,7 +887,7 @@ function filterLog(f,btn){
 //  QR MODAL
 // ═══════════════════════════════════════════════════════════════════
 function showQR(usn,name){
-  const url=`${BASE}/checkin.html?usn=${encodeURIComponent(usn)}`;
+  const url=`${BASE}/checkin.html?usn=${encodeURIComponent(usn)}&vol=vap2026`;
   document.getElementById('qr-name').textContent=name;
   document.getElementById('qr-usn').textContent=usn;
   document.getElementById('qr-url').textContent=url;
