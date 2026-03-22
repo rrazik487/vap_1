@@ -237,19 +237,23 @@ async function processCheckin(usn, session) {
   const {data:attRow} = await sb.from('vap_attendance').select('*').eq('usn', usn).single();
   const days = attRow?.days || {};
 
-  if (days[selectedDay]) {
+  // Key format: "dayNum-session" e.g. "1-M", "1-11", "1-PM"
+  const attKey = selectedDay + '-' + session;
+  const sessionLabel = {'M':'Morning (9AM)','11':'Mid-morning (11AM)','PM':'Post-lunch (2PM)'}[session] || session;
+
+  if (days[attKey]) {
     showResult('already', '✓', 'ALREADY CHECKED IN', part.name, usn, days,
-      `${part.name} is already marked present for Day ${selectedDay}.`);
+      `${part.name} is already marked for Day ${selectedDay} ${sessionLabel}.`);
     addHistory(part.name, usn, 'already');
     return;
   }
 
-  // Mark present
-  days[selectedDay] = true;
+  // Mark present for this specific session
+  days[attKey] = true;
   await sb.from('vap_attendance').upsert({usn, days, updated_at: new Date().toISOString()}, {onConflict:'usn'});
 
   showResult('success', '✓', 'CHECKED IN!', part.name, usn, days,
-    `${part.name} is now marked present for Day ${selectedDay}.`);
+    `${part.name} marked present — Day ${selectedDay} ${sessionLabel}.`);
   addHistory(part.name, usn, 'success');
 }
 
@@ -264,11 +268,18 @@ function showResult(type, icon, status, name, usn, days, msg) {
   document.getElementById('result-usn').textContent = usn || '—';
   document.getElementById('result-msg').textContent = msg;
 
-  // Attendance pips
+  // Attendance pips — show day + all 3 sessions
   const pips = document.getElementById('att-pips');
-  pips.innerHTML = [1,2,3,4,5].map(d=>
-    `<div class="att-pip${days[d]?' present':''}">${d}</div>`
-  ).join('');
+  pips.innerHTML = [1,2,3,4,5].map(d => {
+    const anyPresent = days[d+'-M'] || days[d+'-11'] || days[d+'-PM'];
+    const sessions = ['M','11','PM'].map(s =>
+      `<div style="width:14px;height:14px;border-radius:2px;border:1px solid #2a3040;background:${days[d+'-'+s]?'#00f5a0':'#1a1f27'};display:inline-flex;align-items:center;justify-content:center;font-size:0.38rem;color:${days[d+'-'+s]?'#000':'#5a6578'};margin:0 1px;">${s}</div>`
+    ).join('');
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+      <div>${sessions}</div>
+      <div style="font-family:monospace;font-size:0.5rem;color:${anyPresent?'#00f5a0':'#5a6578'};">D${d}</div>
+    </div>`;
+  }).join('');
 }
 
 function scanNext() {

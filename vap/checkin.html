@@ -162,7 +162,19 @@ async function checkin() {
 function showPips(days) {
   const row = document.getElementById('att-row');
   row.style.display = 'flex';
-  row.innerHTML = [1,2,3,4,5].map(d=>`<div class="att-pip${days[d]?' present':''}">${d}</div>`).join('');
+  row.style.flexWrap = 'wrap';
+  row.style.justifyContent = 'center';
+  row.innerHTML = [1,2,3,4,5].map(d => {
+    const anyPresent = days[d+'-M'] || days[d+'-11'] || days[d+'-PM'];
+    const sessions = ['M','11','PM'].map(s => {
+      const p = days[d+'-'+s];
+      return `<div style="width:16px;height:16px;border-radius:3px;border:1px solid ${p?'#00f5a0':'#2a3040'};background:${p?'#00f5a0':'#1a1f27'};display:inline-flex;align-items:center;justify-content:center;font-size:0.4rem;color:${p?'#000':'#5a6578'};margin:0 1px;">${s}</div>`;
+    }).join('');
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 3px;">
+      <div>${sessions}</div>
+      <div style="font-family:monospace;font-size:0.52rem;color:${anyPresent?'#00f5a0':'#5a6578'};">D${d}</div>
+    </div>`;
+  }).join('');
 }
 
 checkin();
