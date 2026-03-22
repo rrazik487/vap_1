@@ -273,7 +273,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
     <nav class="hdr-nav">
       <button class="hdr-tab active" onclick="showPage('dashboard')">Dashboard</button>
       <button class="hdr-tab" onclick="showPage('participants')">Participants</button>
-      <button class="hdr-tab" onclick="showPage('activity')">Activity Log</button>
+      <button class="hdr-tab" id="tab-activity" onclick="showPage('activity')">Activity Log</button>
     </nav>
     <div class="hdr-right">
       <button class="scan-btn" id="scan-btn-hdr" onclick="window.open('scanner.html','_blank')" style="display:none;">&#9654; Scan QR</button>
@@ -292,7 +292,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
   <div style="display:flex;">
     <button onclick="showPage('dashboard')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Dashboard</button>
     <button onclick="showPage('participants')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Participants</button>
-    <button onclick="showPage('activity')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Activity</button>
+    <button onclick="showPage('activity')" id="mob-tab-activity" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;display:none;" class="mbtn">Activity</button>
     <button onclick="window.open('scanner.html','_blank')" id="scan-btn-mob" style="flex:1;background:none;border:none;color:var(--b);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;font-weight:600;display:none;">Scan</button>
   </div>
 </div>
@@ -418,8 +418,9 @@ let allLogs  = [], logFilter = 'all';
 const USERS = {
   // ── ADMINS ──
   '1001': { pin: 'vap@2026',   name: 'Razik',            role: 'admin'     },
-  '1002': { pin: 'ecl@2026',   name: 'Evalanche Club',   role: 'admin'     },
-  '1003': { pin: 'hod@2026',   name: 'Faculty Admin',    role: 'admin'     },
+  '1002': { pin: 'mitra@2026', name: 'Mitra',            role: 'admin'     },
+  '1003': { pin: 'ecl@2026',   name: 'Evalanche Club',   role: 'admin'     },
+  '1004': { pin: 'hod@2026',   name: 'Faculty Admin',    role: 'admin'     },
   // ── VOLUNTEERS ──
   '2001': { pin: 'v@day01',    name: 'Debo',      role: 'volunteer' },
   '2002': { pin: 'v@day02',    name: 'Lalithya',      role: 'volunteer' },
@@ -508,6 +509,17 @@ function onAuthed() {
   document.getElementById('pt-role-note').textContent =
     U.perms.editAttendance ? 'Click day pip to toggle attendance' : 'View only';
 
+  // Show/hide Activity Log tab based on role
+  const actTab = document.getElementById('tab-activity');
+  const mobActTab = document.getElementById('mob-tab-activity');
+  if (U.role === 'admin') {
+    if (actTab) actTab.style.display = '';
+    if (mobActTab) mobActTab.style.display = '';
+  } else {
+    if (actTab) actTab.style.display = 'none';
+    if (mobActTab) mobActTab.style.display = 'none';
+  }
+
   logAction('login', 'Signed in as ' + U.role);
   showToast('Welcome, ' + U.name + '!', 'g');
   initApp();
@@ -529,11 +541,18 @@ async function doLogout() {
 // ═══════════════════════════════════════════════════════════════════
 async function logAction(action, detail, meta={}) {
   try {
-    await sb.from('vap_activity_log').insert({
-      user_email: U.email, user_name: U.name, user_role: U.role,
-      action, detail, metadata: meta,
+    const res = await sb.from('vap_activity_log').insert({
+      user_email: U.email,
+      user_name:  U.name,
+      user_role:  U.role,
+      action,
+      detail,
+      metadata: meta,
     });
-  } catch(e) {}
+    if (res.error) console.warn('logAction error:', res.error.message);
+  } catch(e) {
+    console.warn('logAction failed:', e);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -840,9 +859,18 @@ function filterDay(d,btn){document.querySelectorAll('.df-btn').forEach(b=>b.clas
 //  ACTIVITY LOG
 // ═══════════════════════════════════════════════════════════════════
 async function loadLog(){
-  const {data}=await sb.from('vap_activity_log').select('*').order('created_at',{ascending:false}).limit(200);
-  if(data) allLogs=data;
-  renderLog();
+  try {
+    const {data,error}=await sb.from('vap_activity_log').select('*').order('created_at',{ascending:false}).limit(200);
+    if(error){
+      console.warn('loadLog error:',error.message);
+      document.getElementById('log-list').innerHTML='<div class="log-empty">Activity log table not set up yet.<br/>Run the SQL setup in Supabase.</div>';
+      return;
+    }
+    if(data) allLogs=data;
+    renderLog();
+  } catch(e) {
+    console.warn('loadLog failed:',e);
+  }
 }
 function renderLog(){
   const list=document.getElementById('log-list');
