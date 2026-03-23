@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root{
   --bg:#060709;--s1:#0d1014;--s2:#13171d;--s3:#1a1f27;
@@ -213,6 +214,27 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 .modal-close:hover{border-color:var(--r);color:var(--r);}
 
 /* ─── TOAST ───────────────────────────────────────────────────────── */
+/* ─── REPORT MODAL ── */
+.rpt-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:600;display:none;align-items:center;justify-content:center;padding:1rem;}
+.rpt-modal-bg.open{display:flex;}
+.rpt-modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:480px;width:100%;}
+.rpt-modal h3{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:0.3rem;}
+.rpt-modal p{font-size:0.8rem;color:var(--muted2);margin-bottom:1.5rem;}
+.rpt-section{margin-bottom:1.2rem;}
+.rpt-label{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem;}
+.rpt-options{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.rpt-opt{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.7rem;padding:0.35rem 0.8rem;border-radius:6px;cursor:pointer;transition:all 0.15s;}
+.rpt-opt:hover{border-color:var(--g);color:var(--text);}
+.rpt-opt.selected{background:var(--g);border-color:var(--g);color:#000;font-weight:700;}
+.rpt-actions{display:flex;gap:0.6rem;margin-top:1.5rem;}
+.rpt-gen-btn{flex:1;background:var(--g);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;padding:0.75rem;border:none;border-radius:9px;cursor:pointer;transition:opacity 0.2s;}
+.rpt-gen-btn:hover{opacity:0.88;}
+.rpt-gen-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.rpt-cancel-btn{background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.85rem;padding:0.75rem 1.2rem;border-radius:9px;cursor:pointer;}
+.rpt-cancel-btn:hover{border-color:var(--r);color:var(--r);}
+.rpt-btn{background:var(--s2);border:1px solid var(--border2);color:var(--g);font-family:'DM Mono',monospace;font-size:0.65rem;padding:0.35rem 0.82rem;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.rpt-btn:hover{background:var(--g);color:#000;}
+
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s1);border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.55rem 1rem;border-radius:9px;z-index:999;transform:translateY(60px);opacity:0;transition:all 0.3s ease;pointer-events:none;max-width:260px;line-height:1.4;}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.g{border-color:rgba(0,245,160,0.4);color:var(--g);}
@@ -341,6 +363,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
       <button class="df-btn" onclick="filterDay('5',this)">D5</button>
       <input class="psearch" type="text" id="pt-search" placeholder="Search name / USN…" oninput="renderPT()"/>
       <button class="ref-btn" onclick="loadData()">&#8635; Refresh</button>
+      <button class="rpt-btn" id="rpt-btn" onclick="openReportModal()" style="display:none;">&#128196; Absent Report</button>
     </div>
     <div class="tbl-wrap">
       <table class="ptbl">
@@ -366,6 +389,50 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
       <button class="lf-btn participant" onclick="filterLog('participant',this)">Participants</button>
     </div>
     <div class="log-list" id="log-list"><div class="log-empty">Loading…</div></div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="rpt-modal-bg" id="rpt-modal-bg" onclick="if(event.target===this)closeReportModal()">
+  <div class="rpt-modal">
+    <h3>&#128196; Absent Report</h3>
+    <p>Generate a PDF list of absent participants for a selected day and session.</p>
+
+    <div class="rpt-section">
+      <div class="rpt-label">Select Day</div>
+      <div class="rpt-options" id="rpt-days">
+        <div class="rpt-opt selected" data-val="all" onclick="selectRptOpt(this,'day')">Whole Event</div>
+        <div class="rpt-opt" data-val="1" onclick="selectRptOpt(this,'day')">Day 1 · 23 Mar</div>
+        <div class="rpt-opt" data-val="2" onclick="selectRptOpt(this,'day')">Day 2 · 24 Mar</div>
+        <div class="rpt-opt" data-val="3" onclick="selectRptOpt(this,'day')">Day 3 · 25 Mar</div>
+        <div class="rpt-opt" data-val="4" onclick="selectRptOpt(this,'day')">Day 4 · 26 Mar</div>
+        <div class="rpt-opt" data-val="5" onclick="selectRptOpt(this,'day')">Day 5 · 27 Mar</div>
+      </div>
+    </div>
+
+    <div class="rpt-section" id="rpt-session-row">
+      <div class="rpt-label">Select Session</div>
+      <div class="rpt-options" id="rpt-sessions">
+        <div class="rpt-opt selected" data-val="all" onclick="selectRptOpt(this,'session')">All Sessions</div>
+        <div class="rpt-opt" data-val="M" onclick="selectRptOpt(this,'session')">Morning · 9AM</div>
+        <div class="rpt-opt" data-val="11" onclick="selectRptOpt(this,'session')">Mid-morning · 11AM</div>
+        <div class="rpt-opt" data-val="PM" onclick="selectRptOpt(this,'session')">Post-lunch · 2PM</div>
+      </div>
+    </div>
+
+    <div class="rpt-section">
+      <div class="rpt-label">Report Type</div>
+      <div class="rpt-options" id="rpt-types">
+        <div class="rpt-opt selected" data-val="absent" onclick="selectRptOpt(this,'type')">Absent List</div>
+        <div class="rpt-opt" data-val="present" onclick="selectRptOpt(this,'type')">Present List</div>
+        <div class="rpt-opt" data-val="both" onclick="selectRptOpt(this,'type')">Full Summary</div>
+      </div>
+    </div>
+
+    <div class="rpt-actions">
+      <button class="rpt-cancel-btn" onclick="closeReportModal()">Cancel</button>
+      <button class="rpt-gen-btn" id="rpt-gen-btn" onclick="generateReport()">&#128196; Generate PDF</button>
+    </div>
   </div>
 </div>
 
@@ -519,6 +586,10 @@ function onAuthed() {
     if (actTab) actTab.style.display = 'none';
     if (mobActTab) mobActTab.style.display = 'none';
   }
+
+  // Show report button for admins only
+  const rptBtn = document.getElementById('rpt-btn');
+  if (rptBtn && U.role === 'admin') rptBtn.style.display = '';
 
   logAction('login', 'Signed in as ' + U.role);
   showToast('Welcome, ' + U.name + '!', 'g');
@@ -939,6 +1010,210 @@ function showPage(id){
 // ═══════════════════════════════════════════════════════════════════
 //  TOAST
 // ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+//  ABSENT REPORT
+// ═══════════════════════════════════════════════════════════════════
+let rptDay = 'all', rptSession = 'all', rptType = 'absent';
+
+function openReportModal() {
+  document.getElementById('rpt-modal-bg').classList.add('open');
+}
+function closeReportModal() {
+  document.getElementById('rpt-modal-bg').classList.remove('open');
+}
+function selectRptOpt(el, group) {
+  const container = el.parentElement;
+  container.querySelectorAll('.rpt-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const val = el.dataset.val;
+  if (group === 'day') {
+    rptDay = val;
+    // Hide session selector if "Whole Event" selected
+    document.getElementById('rpt-session-row').style.opacity = val === 'all' ? '0.4' : '1';
+  }
+  if (group === 'session') rptSession = val;
+  if (group === 'type') rptType = val;
+}
+
+function generateReport() {
+  const btn = document.getElementById('rpt-gen-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, margin = 14;
+    let y = 0;
+
+    const DAY_NAMES = {'1':'Day 1 — 23 Mar','2':'Day 2 — 24 Mar','3':'Day 3 — 25 Mar','4':'Day 4 — 26 Mar','5':'Day 5 — 27 Mar'};
+    const SESSION_NAMES = {'M':'Morning (9AM)','11':'Mid-morning (11AM)','PM':'Post-lunch (2PM)','all':'All Sessions'};
+    const days = rptDay === 'all' ? ['1','2','3','4','5'] : [rptDay];
+    const sessions = rptSession === 'all' ? ['M','11','PM'] : [rptSession];
+
+    // Build absent/present lists
+    function isPresent(usn, d, s) {
+      const att = attendance[usn] || {};
+      if (s === 'all') return sessions.some(ss => att[d+'-'+ss]);
+      return !!att[d+'-'+s];
+    }
+
+    // Header
+    const addHeader = () => {
+      // Top bar
+      doc.setFillColor(10, 12, 15);
+      doc.rect(0, 0, W, 38, 'F');
+      doc.setTextColor(0, 245, 160);
+      doc.setFontSize(8);
+      doc.setFont('helvetica','bold');
+      doc.text('EVALANCHE CLUB  ·  ECE DEPT  ·  JAIN UNIVERSITY', W/2, 10, {align:'center'});
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(16);
+      doc.text('VAP 2026 — Attendance Report', W/2, 20, {align:'center'});
+      doc.setFontSize(9);
+      doc.setTextColor(180,180,180);
+      const subtitle = rptDay === 'all'
+        ? 'Whole Event  ·  23–27 March 2026'
+        : DAY_NAMES[rptDay] + '  ·  ' + SESSION_NAMES[rptSession];
+      doc.text(subtitle, W/2, 28, {align:'center'});
+      doc.setFontSize(7);
+      doc.text('Generated: ' + new Date().toLocaleString('en-IN'), W/2, 35, {align:'center'});
+      y = 46;
+    };
+
+    const addSectionTitle = (title, color) => {
+      doc.setFillColor(...color);
+      doc.rect(margin, y, W - margin*2, 7, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica','bold');
+      doc.text(title, margin+3, y+5);
+      y += 10;
+    };
+
+    const addTable = (list, columns) => {
+      if (!list.length) {
+        doc.setTextColor(150,150,150);
+        doc.setFontSize(8);
+        doc.setFont('helvetica','italic');
+        doc.text('No records found.', margin+3, y+4);
+        y += 10; return;
+      }
+
+      // Column widths: #, Name, USN, Dept, Year, Days Present
+      const colW = [8, 55, 28, 22, 14, rptDay==='all'?32:22];
+      const headers = ['#','Name','USN','Department','Year', rptDay==='all'?'Days Present':'Session'];
+
+      // Header row
+      doc.setFillColor(40,40,50);
+      doc.rect(margin, y, W-margin*2, 6, 'F');
+      doc.setTextColor(200,200,200);
+      doc.setFontSize(7);
+      doc.setFont('helvetica','bold');
+      let x = margin+2;
+      headers.forEach((h,i) => { doc.text(h, x, y+4); x += colW[i]; });
+      y += 7;
+
+      list.forEach((p, idx) => {
+        if (y > 270) { doc.addPage(); addHeader(); y = 46; }
+        const bg = idx % 2 === 0 ? [245,245,248] : [255,255,255];
+        doc.setFillColor(...bg);
+        doc.rect(margin, y, W-margin*2, 6, 'F');
+        doc.setTextColor(40,40,40);
+        doc.setFontSize(7);
+        doc.setFont('helvetica','normal');
+        let x = margin+2;
+        const row = [
+          String(idx+1),
+          (p.name||'—').substring(0,30),
+          p.usn||'—',
+          (p.department||'—').substring(0,12),
+          p.year||'—',
+          p._sessionStr||'—'
+        ];
+        row.forEach((cell,i) => { doc.text(String(cell), x, y+4); x += colW[i]; });
+        y += 6;
+      });
+      y += 4;
+    };
+
+    addHeader();
+
+    // Build report data
+    if (rptDay === 'all') {
+      // Whole event — one section per type
+      const buildList = (wantPresent) => participants.map(p => {
+        const presentDays = days.filter(d => sessions.some(s => (attendance[p.usn]||{})[d+'-'+s]));
+        const absentDays  = days.filter(d => !sessions.some(s => (attendance[p.usn]||{})[d+'-'+s]));
+        const relevant = wantPresent ? presentDays.length > 0 : absentDays.length > 0;
+        if (!relevant) return null;
+        return { ...p, _sessionStr: wantPresent
+          ? presentDays.map(d=>'D'+d).join(',')
+          : absentDays.map(d=>'D'+d).join(',') };
+      }).filter(Boolean);
+
+      if (rptType === 'absent' || rptType === 'both') {
+        const absList = buildList(false);
+        addSectionTitle('ABSENT LIST  (' + absList.length + ' of ' + participants.length + ' participants)', [220,50,70]);
+        addTable(absList, 6);
+      }
+      if (rptType === 'present' || rptType === 'both') {
+        const presList = buildList(true);
+        if (rptType === 'both' && y > 200) { doc.addPage(); addHeader(); }
+        addSectionTitle('PRESENT LIST  (' + presList.length + ' of ' + participants.length + ' participants)', [0,150,100]);
+        addTable(presList, 6);
+      }
+    } else {
+      // Specific day — per session
+      const sessionsToDo = rptSession === 'all' ? ['M','11','PM'] : [rptSession];
+      sessionsToDo.forEach(s => {
+        const sLabel = SESSION_NAMES[s] + ' — Day ' + rptDay;
+        const presentList = participants.filter(p => (attendance[p.usn]||{})[rptDay+'-'+s]).map(p=>({...p,_sessionStr:'Present'}));
+        const absentList  = participants.filter(p => !(attendance[p.usn]||{})[rptDay+'-'+s]).map(p=>({...p,_sessionStr:'Absent'}));
+
+        if (rptType === 'absent' || rptType === 'both') {
+          addSectionTitle('ABSENT — ' + sLabel + '  (' + absentList.length + '/' + participants.length + ')', [220,50,70]);
+          addTable(absentList, 6);
+        }
+        if (rptType === 'present' || rptType === 'both') {
+          addSectionTitle('PRESENT — ' + sLabel + '  (' + presentList.length + '/' + participants.length + ')', [0,150,100]);
+          addTable(presentList, 6);
+        }
+        if (rptSession === 'all') y += 4;
+      });
+    }
+
+    // Summary stats at bottom
+    if (y < 260) {
+      doc.setDrawColor(50,50,60);
+      doc.line(margin, y, W-margin, y); y += 6;
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(100,100,120);
+      doc.text('Total Participants: ' + participants.length + '   |   Report: ' + (rptType.charAt(0).toUpperCase()+rptType.slice(1)) + '   |   Generated by VAP 2026 System', margin, y);
+    }
+
+    // Footer on all pages
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
+      doc.text('VAP 2026 · Evalanche Club · razik.xyz/vap', margin, 290);
+      doc.text('Page ' + i + ' of ' + pageCount, W-margin, 290, {align:'right'});
+    }
+
+    // Filename
+    const dayLabel = rptDay === 'all' ? 'WholeEvent' : 'Day'+rptDay;
+    const sessLabel = rptSession === 'all' ? 'AllSessions' : rptSession;
+    const filename = 'VAP2026_' + rptType.charAt(0).toUpperCase()+rptType.slice(1) + '_' + dayLabel + '_' + sessLabel + '.pdf';
+    doc.save(filename);
+    closeReportModal();
+    showToast('PDF downloaded: ' + filename, 'g');
+  } catch(err) {
+    console.error(err);
+    showToast('PDF generation failed: ' + err.message, '');
+  }
+
+  btn.disabled = false; btn.textContent = '\u{1F4C4} Generate PDF';
+}
+
 let _tt;
 function showToast(msg,type=''){
   const t=document.getElementById('toast');
