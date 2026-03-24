@@ -202,6 +202,34 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 .ltime{font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);white-space:nowrap;flex-shrink:0;margin-top:2px;}
 .log-empty{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.72rem;}
 
+/* ─── FEEDBACK PAGE ───────────────────────────────────────────────── */
+.fb-toolbar{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;}
+.fb-day-btn{background:var(--s1);border:1px solid var(--border);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.63rem;padding:0.26rem 0.62rem;border-radius:5px;cursor:pointer;transition:all 0.15s;}
+.fb-day-btn:hover{border-color:var(--border2);color:var(--text);}
+.fb-day-btn.active{background:var(--p);border-color:var(--p);color:#fff;}
+.fb-dl-btn{background:var(--p);border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.72rem;padding:0.35rem 0.9rem;border-radius:6px;cursor:pointer;transition:opacity 0.2s;margin-left:auto;}
+.fb-dl-btn:hover{opacity:0.85;}
+.fb-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0.5rem;margin-bottom:1.2rem;}
+.fb-stat{background:var(--s1);border:1px solid var(--border);border-radius:9px;padding:0.75rem 0.9rem;text-align:center;}
+.fb-stat-v{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--p);line-height:1;}
+.fb-stat-l{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:0.25rem;}
+.fb-star-bar{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;}
+.fb-star-label{font-size:0.75rem;color:var(--muted2);width:140px;flex-shrink:0;}
+.fb-star-track{flex:1;height:7px;background:var(--border);border-radius:99px;overflow:hidden;}
+.fb-star-fill{height:100%;background:var(--y);border-radius:99px;transition:width 0.5s ease;}
+.fb-star-val{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--y);width:28px;text-align:right;flex-shrink:0;}
+.fb-tbl-wrap{overflow-x:auto;margin-bottom:4rem;}
+.fb-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:0.74rem;}
+.fb-tbl th{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.65rem;background:var(--s2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.fb-tbl td{padding:0.55rem 0.65rem;border-bottom:1px solid var(--border);vertical-align:top;}
+.fb-tbl tr{background:var(--s1);}
+.fb-tbl tr:hover td{background:var(--s2);}
+.fb-stars-cell{color:var(--y);font-size:0.75rem;letter-spacing:1px;}
+.fb-tag{font-size:0.6rem;font-family:'DM Mono',monospace;padding:0.08rem 0.3rem;border-radius:3px;background:rgba(168,85,247,0.1);color:var(--p);border:1px solid rgba(168,85,247,0.15);}
+.fb-text-cell{font-size:0.7rem;color:var(--muted2);line-height:1.4;max-width:180px;}
+.fb-no-data{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.72rem;}
+.fb-section-title{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--p);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.6rem;margin-top:1.5rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
+
 /* ─── QR MODAL ────────────────────────────────────────────────────── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(10px);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem;}
 .modal-bg.open{display:flex;}
@@ -259,6 +287,15 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
       <div class="auth-brand-name">VAP 2026</div>
       <div class="auth-brand-sub">Evalanche Club · Staff Portal</div>
     </div>
+    <!-- FEEDBACK BANNER — visible to everyone before login -->
+    <div style="background:rgba(0,245,160,0.06);border:1px solid rgba(0,245,160,0.25);border-radius:12px;padding:0.9rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:0.8rem;">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--g);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.25rem;">📝 Session Feedback</div>
+        <div style="font-size:0.8rem;color:var(--muted2);line-height:1.4;">Share your feedback for today's session — takes 2 mins!</div>
+      </div>
+      <a href="https://razik.xyz/feedback" target="_blank" style="flex-shrink:0;background:var(--g);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;padding:0.5rem 1rem;border-radius:7px;text-decoration:none;white-space:nowrap;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Give Feedback →</a>
+    </div>
+
     <div class="auth-card">
       <h2>Enter your access code</h2>
       <div class="auth-card-sub">Type your ID number and PIN given by the event coordinator.</div>
@@ -293,9 +330,10 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
   <div class="hdr">
     <div class="logo"><div class="logo-dot"></div>VAP <span style="color:var(--muted2);font-weight:400;margin-left:2px;">2026</span></div>
     <nav class="hdr-nav">
-      <button class="hdr-tab active" onclick="showPage('dashboard')">Dashboard</button>
-      <button class="hdr-tab" onclick="showPage('participants')">Participants</button>
+      <button class="hdr-tab active" id="tab-dashboard" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="hdr-tab" id="tab-participants" onclick="showPage('participants')">Participants</button>
       <button class="hdr-tab" id="tab-activity" onclick="showPage('activity')">Activity Log</button>
+      <button class="hdr-tab" id="tab-feedback" onclick="showPage('feedback')" style="display:none;">Feedback</button>
     </nav>
     <div class="hdr-right">
       <button class="scan-btn" id="scan-btn-hdr" onclick="window.open('scanner.html','_blank')" style="display:none;">&#9654; Scan QR</button>
@@ -315,6 +353,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
     <button onclick="showPage('dashboard')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Dashboard</button>
     <button onclick="showPage('participants')" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;" class="mbtn">Participants</button>
     <button onclick="showPage('activity')" id="mob-tab-activity" style="flex:1;background:none;border:none;color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;display:none;" class="mbtn">Activity</button>
+    <button onclick="showPage('feedback')" id="mob-tab-feedback" style="flex:1;background:none;border:none;color:var(--p);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;display:none;font-weight:600;" class="mbtn">Feedback</button>
     <button onclick="window.open('scanner.html','_blank')" id="scan-btn-mob" style="flex:1;background:none;border:none;color:var(--b);font-family:'Cabinet Grotesk',sans-serif;font-size:0.72rem;padding:0.55rem 0.3rem;cursor:pointer;font-weight:600;display:none;">Scan</button>
   </div>
 </div>
@@ -392,7 +431,49 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
   </div>
 </div>
 
-<!-- REPORT MODAL -->
+<!-- FEEDBACK PAGE (admin only) -->
+<div class="page" id="page-feedback">
+  <div class="wrap">
+    <div class="page-header">
+      <h2>Feedback Responses</h2>
+      <p>All participant feedback — filter by day, view ratings &amp; comments, download PDF</p>
+    </div>
+    <!-- Toolbar -->
+    <div class="fb-toolbar">
+      <button class="fb-day-btn active" data-day="all" onclick="filterFeedback('all',this)">All Days</button>
+      <button class="fb-day-btn" data-day="1" onclick="filterFeedback('1',this)">Day 1</button>
+      <button class="fb-day-btn" data-day="2" onclick="filterFeedback('2',this)">Day 2</button>
+      <button class="fb-day-btn" data-day="3" onclick="filterFeedback('3',this)">Day 3</button>
+      <button class="fb-day-btn" data-day="4" onclick="filterFeedback('4',this)">Day 4</button>
+      <button class="fb-day-btn" data-day="5" onclick="filterFeedback('5',this)">Day 5</button>
+      <button class="fb-dl-btn" onclick="downloadFeedbackPDF()">&#128196; Download PDF</button>
+    </div>
+    <!-- Summary stats -->
+    <div class="fb-stats">
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-total">—</div><div class="fb-stat-l">Total</div></div>
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-avg-overall">—</div><div class="fb-stat-l">Avg Overall</div></div>
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-avg-content">—</div><div class="fb-stat-l">Avg Content</div></div>
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-avg-speaker">—</div><div class="fb-stat-l">Avg Speaker</div></div>
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-avg-practical">—</div><div class="fb-stat-l">Avg Practical</div></div>
+      <div class="fb-stat"><div class="fb-stat-v" id="fb-recommend">—</div><div class="fb-stat-l">Would Recommend</div></div>
+    </div>
+    <!-- Rating bars -->
+    <div id="fb-rating-bars"></div>
+    <!-- Table -->
+    <div class="fb-section-title">Individual Responses</div>
+    <div class="fb-tbl-wrap">
+      <table class="fb-tbl">
+        <thead><tr>
+          <th>#</th><th>Day</th><th>Name</th><th>USN</th>
+          <th>Overall</th><th>Content</th><th>Speaker</th><th>Practical</th>
+          <th>Enjoyed</th><th>Pace</th><th>Recommend</th>
+          <th>Suggestions</th><th>Comments</th><th>Time</th>
+        </tr></thead>
+        <tbody id="fb-body"><tr><td colspan="14" class="fb-no-data">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <div class="rpt-modal-bg" id="rpt-modal-bg" onclick="if(event.target===this)closeReportModal()">
   <div class="rpt-modal">
     <h3>&#128196; Absent Report</h3>
@@ -585,6 +666,17 @@ function onAuthed() {
   } else {
     if (actTab) actTab.style.display = 'none';
     if (mobActTab) mobActTab.style.display = 'none';
+  }
+
+  // Show feedback tab for admins only
+  const fbTab = document.getElementById('tab-feedback');
+  const mobFbTab = document.getElementById('mob-tab-feedback');
+  if (U.role === 'admin') {
+    if (fbTab) fbTab.style.display = '';
+    if (mobFbTab) mobFbTab.style.display = '';
+  } else {
+    if (fbTab) fbTab.style.display = 'none';
+    if (mobFbTab) mobFbTab.style.display = 'none';
   }
 
   // Show report button for admins only
@@ -1001,10 +1093,14 @@ function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.hdr-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id)?.classList.add('active');
-  [...document.querySelectorAll('.hdr-tab')].find(t=>t.textContent.toLowerCase().startsWith(
-    id==='dashboard'?'d':id==='participants'?'p':'a'
-  ))?.classList.add('active');
+  // Activate correct header tab
+  const tabMap = {dashboard:'tab-dashboard',participants:'tab-participants',activity:'tab-activity',feedback:'tab-feedback'};
+  // fallback: match by first letter
+  const el = document.getElementById(tabMap[id]) ||
+    [...document.querySelectorAll('.hdr-tab')].find(t=>t.textContent.trim().toLowerCase().startsWith(id[0]));
+  if(el) el.classList.add('active');
   if(id==='activity'&&U.perms.viewLog) loadLog();
+  if(id==='feedback'&&U.role==='admin') loadFeedback();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1212,6 +1308,200 @@ function generateReport() {
   }
 
   btn.disabled = false; btn.textContent = '\u{1F4C4} Generate PDF';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FEEDBACK
+// ═══════════════════════════════════════════════════════════════════
+let allFeedback = [], fbDayFilter = 'all';
+
+async function loadFeedback() {
+  const body = document.getElementById('fb-body');
+  body.innerHTML = '<tr><td colspan="14" class="fb-no-data">Loading…</td></tr>';
+  try {
+    const { data, error } = await sb.from('vap_feedback').select('*').order('submitted_at', { ascending: false });
+    if (error) throw error;
+    allFeedback = data || [];
+    renderFeedback();
+  } catch(e) {
+    body.innerHTML = '<tr><td colspan="14" class="fb-no-data">Error loading: ' + e.message + '</td></tr>';
+  }
+}
+
+function filterFeedback(day, btn) {
+  fbDayFilter = day;
+  document.querySelectorAll('.fb-day-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeedback();
+}
+
+function stars(n) {
+  if (!n) return '<span style="color:var(--muted)">—</span>';
+  return '<span class="fb-stars-cell">' + '★'.repeat(n) + '<span style="opacity:0.25">' + '★'.repeat(5-n) + '</span></span>';
+}
+
+function avg(arr) {
+  const v = arr.filter(x => x != null && x > 0);
+  if (!v.length) return '—';
+  return (v.reduce((a,b)=>a+b,0)/v.length).toFixed(1);
+}
+
+function renderFeedback() {
+  const data = fbDayFilter === 'all' ? allFeedback : allFeedback.filter(f => f.day === fbDayFilter);
+  const body = document.getElementById('fb-body');
+
+  // Stats
+  document.getElementById('fb-total').textContent = data.length || '0';
+  document.getElementById('fb-avg-overall').textContent   = avg(data.map(f=>f.rating_overall));
+  document.getElementById('fb-avg-content').textContent   = avg(data.map(f=>f.rating_content));
+  document.getElementById('fb-avg-speaker').textContent   = avg(data.map(f=>f.rating_speaker));
+  document.getElementById('fb-avg-practical').textContent = avg(data.map(f=>f.rating_practical));
+
+  const recYes = data.filter(f => f.recommend && f.recommend.toLowerCase().includes('yes')).length;
+  document.getElementById('fb-recommend').textContent = data.length ? Math.round(recYes/data.length*100)+'%' : '—';
+
+  // Rating bars
+  const barsEl = document.getElementById('fb-rating-bars');
+  const metrics = [
+    { label:'Overall Session Quality', key:'rating_overall' },
+    { label:'Content Relevance',       key:'rating_content' },
+    { label:'Speaker / Facilitator',   key:'rating_speaker' },
+    { label:'Practical Component',     key:'rating_practical' },
+  ];
+  barsEl.innerHTML = metrics.map(m => {
+    const a = parseFloat(avg(data.map(f=>f[m.key]))) || 0;
+    const pct = a ? (a/5*100).toFixed(0) : 0;
+    return `<div class="fb-star-bar">
+      <div class="fb-star-label">${m.label}</div>
+      <div class="fb-star-track"><div class="fb-star-fill" style="width:${pct}%"></div></div>
+      <div class="fb-star-val">${a || '—'}</div>
+    </div>`;
+  }).join('');
+
+  // Table rows
+  if (!data.length) {
+    body.innerHTML = '<tr><td colspan="14" class="fb-no-data">No feedback for this selection yet.</td></tr>';
+    return;
+  }
+
+  const DAY_LABELS = {'1':'Day 1','2':'Day 2','3':'Day 3','4':'Day 4','5':'Day 5'};
+  body.innerHTML = data.map((f,i) => {
+    const t = f.submitted_at ? new Date(f.submitted_at).toLocaleString('en-IN',{dateStyle:'short',timeStyle:'short'}) : '—';
+    return `<tr>
+      <td><span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.65rem;">${i+1}</span></td>
+      <td><span class="fb-tag">${DAY_LABELS[f.day]||('D'+f.day)||'—'}</span></td>
+      <td style="font-weight:600;">${f.name||'Anonymous'}</td>
+      <td class="usn-t">${f.usn||'—'}</td>
+      <td>${stars(f.rating_overall)}</td>
+      <td>${stars(f.rating_content)}</td>
+      <td>${stars(f.rating_speaker)}</td>
+      <td>${stars(f.rating_practical)}</td>
+      <td class="fb-text-cell">${f.enjoyed||'—'}</td>
+      <td class="fb-text-cell">${f.pace||'—'}</td>
+      <td class="fb-text-cell">${f.recommend||'—'}</td>
+      <td class="fb-text-cell">${f.improve||'—'}</td>
+      <td class="fb-text-cell">${f.comments||'—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);white-space:nowrap;">${t}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function downloadFeedbackPDF() {
+  const data = fbDayFilter === 'all' ? allFeedback : allFeedback.filter(f => f.day === fbDayFilter);
+  if (!data.length) { showToast('No feedback data to download','r'); return; }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const margin = 12;
+    let y = margin;
+
+    const DAY_LABELS = {'1':'Day 1','2':'Day 2','3':'Day 3','4':'Day 4','5':'Day 5'};
+    const dayLabel = fbDayFilter === 'all' ? 'All Days' : DAY_LABELS[fbDayFilter] || ('Day '+fbDayFilter);
+
+    function addHeader() {
+      // Dark header band
+      doc.setFillColor(10,13,18); doc.rect(0,0,W,22,'F');
+      doc.setTextColor(0,245,160); doc.setFontSize(13); doc.setFont('helvetica','bold');
+      doc.text('VAP 2026 — Feedback Report', margin, 10);
+      doc.setTextColor(150,160,180); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text('Evalanche Club · ECE Dept · Jain University · razik.xyz/vap', margin, 16);
+      doc.text('Filter: ' + dayLabel + '   |   Total responses: ' + data.length + '   |   Generated: ' + new Date().toLocaleString('en-IN'), W-margin, 16, {align:'right'});
+      y = 28;
+    }
+
+    addHeader();
+
+    // Average stats block
+    const avgs = [
+      ['Overall', avg(data.map(f=>f.rating_overall))],
+      ['Content', avg(data.map(f=>f.rating_content))],
+      ['Speaker', avg(data.map(f=>f.rating_speaker))],
+      ['Practical', avg(data.map(f=>f.rating_practical))],
+    ];
+    const recYes = data.filter(f => f.recommend && f.recommend.toLowerCase().includes('yes')).length;
+    const recPct = data.length ? Math.round(recYes/data.length*100)+'%' : '—';
+
+    doc.setFillColor(20,24,32); doc.rect(margin,y,W-margin*2,14,'F');
+    doc.setTextColor(200,210,230); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    let bx = margin+4;
+    avgs.forEach(([lbl,val]) => {
+      doc.text(lbl+': '+val+'/5', bx, y+6); bx += 50;
+    });
+    doc.text('Would Recommend: '+recPct, bx, y+6);
+    y += 18;
+
+    // Table header
+    const cols = ['#','Day','Name','USN','Overall','Content','Speaker','Practical','Enjoyed','Pace','Recommend','Suggestions','Comments'];
+    const colW  = [8,  14,  38,  26,  16,    16,    16,     16,       28,    20,   28,       44,     44];
+    doc.setFillColor(30,40,55); doc.rect(margin,y,W-margin*2,6,'F');
+    doc.setTextColor(160,180,210); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    let cx = margin+2;
+    cols.forEach((c,i) => { doc.text(c, cx, y+4); cx += colW[i]; });
+    y += 7;
+
+    data.forEach((f,idx) => {
+      if (y > H-18) { doc.addPage(); addHeader(); }
+      const bg = idx%2===0 ? [245,246,250] : [255,255,255];
+      doc.setFillColor(...bg); doc.rect(margin,y,W-margin*2,7,'F');
+      doc.setTextColor(40,40,40); doc.setFontSize(6); doc.setFont('helvetica','normal');
+      cx = margin+2;
+      const row = [
+        String(idx+1),
+        DAY_LABELS[f.day]||'D'+f.day||'—',
+        (f.name||'Anonymous').substring(0,22),
+        (f.usn||'—').substring(0,14),
+        f.rating_overall ? String(f.rating_overall)+'/5' : '—',
+        f.rating_content  ? String(f.rating_content)+'/5'  : '—',
+        f.rating_speaker  ? String(f.rating_speaker)+'/5'  : '—',
+        f.rating_practical? String(f.rating_practical)+'/5': '—',
+        (f.enjoyed||'—').substring(0,18),
+        (f.pace||'—').substring(0,14),
+        (f.recommend||'—').substring(0,18),
+        (f.improve||'—').substring(0,28),
+        (f.comments||'—').substring(0,28),
+      ];
+      row.forEach((cell,i) => { doc.text(String(cell), cx, y+4.5); cx += colW[i]; });
+      y += 7;
+    });
+
+    // Footer on all pages
+    const pc = doc.getNumberOfPages();
+    for (let i=1;i<=pc;i++) {
+      doc.setPage(i);
+      doc.setFontSize(6); doc.setTextColor(150,150,150); doc.setFont('helvetica','normal');
+      doc.text('VAP 2026 Feedback · Evalanche Club · Confidential', margin, H-5);
+      doc.text('Page '+i+' of '+pc, W-margin, H-5, {align:'right'});
+    }
+
+    const fname = 'VAP2026_Feedback_' + (fbDayFilter==='all'?'AllDays':'Day'+fbDayFilter) + '.pdf';
+    doc.save(fname);
+    showToast('Downloaded: ' + fname, 'g');
+  } catch(e) {
+    showToast('PDF error: ' + e.message, '');
+  }
 }
 
 let _tt;

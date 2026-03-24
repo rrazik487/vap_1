@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VAP 2026 — Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#060709;--s1:#0d1014;--s2:#13171d;--s3:#1a1f27;
+  --border:#1f2530;--border2:#2a3040;
+  --g:#00f5a0;--b:#2979ff;--r:#ff3d71;--y:#ffb300;
+  --text:#dde4ef;--muted:#5a6578;--muted2:#8494aa;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:0.2;pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -5%,rgba(41,121,255,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+/* HEADER */
+.top-bar{position:sticky;top:0;z-index:100;background:rgba(6,7,9,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 1.5rem;height:54px;display:flex;align-items:center;justify-content:space-between;}
+.tb-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:0.9rem;display:flex;align-items:center;gap:0.5rem;}
+.tb-dot{width:7px;height:7px;background:var(--g);border-radius:50%;animation:blink 2s ease infinite;}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px var(--g);}50%{opacity:0.3;box-shadow:none;}}
+.tb-back{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.65rem;padding:0.28rem 0.7rem;border-radius:6px;cursor:pointer;text-decoration:none;transition:all 0.15s;}
+.tb-back:hover{border-color:var(--g);color:var(--g);}
+
+/* HERO */
+.hero{max-width:680px;margin:0 auto;padding:3rem 1.5rem 1.5rem;text-align:center;position:relative;z-index:1;}
+.day-pill{display:inline-flex;align-items:center;gap:0.4rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--g);border:1px solid rgba(0,245,160,0.3);padding:0.3rem 0.8rem;border-radius:999px;margin-bottom:1.2rem;}
+.dp-dot{width:6px;height:6px;background:var(--g);border-radius:50%;animation:blink 1.5s ease infinite;}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-0.03em;line-height:1.1;margin-bottom:0.5rem;}
+.hero h1 em{font-style:normal;color:var(--g);}
+.hero p{color:var(--muted2);font-size:0.88rem;margin-bottom:2rem;line-height:1.6;}
+
+/* FORM */
+.form-wrap{max-width:620px;margin:0 auto;padding:0 1.5rem 4rem;position:relative;z-index:1;}
+
+/* NOT EVENT DAY */
+.not-today{background:var(--s1);border:1px solid var(--border2);border-radius:16px;padding:2.5rem 2rem;text-align:center;max-width:480px;margin:0 auto;}
+.not-today h2{font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:0.5rem;}
+.not-today p{font-size:0.85rem;color:var(--muted2);line-height:1.6;}
+.day-links{display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem;}
+.day-link{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.4rem 0.8rem;border-radius:7px;cursor:pointer;text-decoration:none;transition:all 0.15s;}
+.day-link:hover,.day-link.active-day{border-color:var(--g);color:var(--g);background:rgba(0,245,160,0.06);}
+
+/* FORM FIELDS */
+.section-title{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--g);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:1rem;margin-top:1.8rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
+.field{margin-bottom:1.2rem;}
+.field label{display:block;font-size:0.8rem;font-weight:600;color:var(--text);margin-bottom:0.5rem;}
+.field .hint{font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem;}
+.field input,.field textarea,.field select{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:9px;padding:0.75rem 1rem;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;resize:vertical;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--g);}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);}
+.field select option{background:var(--s2);}
+
+/* STAR RATING */
+.stars{display:flex;gap:0.4rem;margin-bottom:0.3rem;}
+.star{width:36px;height:36px;background:var(--s2);border:1.5px solid var(--border2);border-radius:8px;font-size:1.2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;user-select:none;}
+.star:hover,.star.active{background:rgba(255,179,0,0.15);border-color:var(--y);}
+.star.active{background:rgba(255,179,0,0.2);}
+.star-label{font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-top:0.3rem;}
+
+/* RADIO GROUP */
+.radio-group{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.radio-opt{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.8rem;padding:0.45rem 0.9rem;border-radius:7px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.radio-opt:hover{border-color:var(--border);color:var(--text);}
+.radio-opt.selected{background:rgba(0,245,160,0.1);border-color:var(--g);color:var(--g);font-weight:600;}
+
+/* SUBMIT */
+.submit-btn{width:100%;background:var(--g);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;padding:0.9rem;border:none;border-radius:10px;cursor:pointer;margin-top:1.5rem;transition:opacity 0.2s;}
+.submit-btn:hover{opacity:0.88;}
+.submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* SUCCESS STATE */
+.success-card{background:var(--s1);border:1px solid rgba(0,245,160,0.3);border-radius:16px;padding:2.5rem 2rem;text-align:center;display:none;animation:fadeUp 0.4s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.success-icon{font-size:3rem;margin-bottom:1rem;}
+.success-card h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;margin-bottom:0.4rem;}
+.success-card p{font-size:0.85rem;color:var(--muted2);line-height:1.6;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--s1);border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.55rem 1rem;border-radius:9px;z-index:999;transform:translateY(60px);opacity:0;transition:all 0.3s ease;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@media(max-width:600px){
+  .hero,.form-wrap{padding-left:1rem;padding-right:1rem;}
+  .radio-group{gap:0.3rem;}
+  .radio-opt{font-size:0.75rem;padding:0.38rem 0.7rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="tb-logo"><div class="tb-dot"></div>VAP 2026</div>
+  <a href="https://razik.xyz/vap" class="tb-back">&#8592; Dashboard</a>
+</div>
+
+<div class="hero">
+  <div class="day-pill"><div class="dp-dot"></div><span id="day-pill-text">Loading…</span></div>
+  <h1>How was<br/><em>today's session?</em></h1>
+  <p>Your feedback helps us improve the programme.<br/>Takes less than 2 minutes.</p>
+</div>
+
+<!-- NOT-AN-EVENT-DAY VIEW (hidden by default) -->
+<div class="form-wrap" id="not-event-day" style="display:none;">
+  <div class="not-today">
+    <div style="font-size:2rem;margin-bottom:0.8rem;">📅</div>
+    <h2>Select a Day</h2>
+    <p>The VAP runs from 23–27 March 2026.<br/>You can submit feedback for any day below.</p>
+    <div class="day-links" id="day-links-manual"></div>
+  </div>
+</div>
+
+<!-- FEEDBACK FORM -->
+<div class="form-wrap" id="feedback-form-wrap">
+  <div id="success-card" class="success-card">
+    <div class="success-icon">✅</div>
+    <h2>Thank you!</h2>
+    <p>Your feedback has been recorded.<br/>We appreciate you taking the time!</p>
+  </div>
+
+  <form id="feedback-form" onsubmit="submitFeedback(event)">
+
+    <div class="section-title">About You (optional)</div>
+
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="f-name" placeholder="e.g. Priya S" maxlength="80"/>
+    </div>
+    <div class="field">
+      <label>USN / Register Number</label>
+      <input type="text" id="f-usn" placeholder="e.g. 23BTREI007" maxlength="20" style="text-transform:uppercase;"/>
+    </div>
+
+    <div class="section-title">Session Ratings</div>
+
+    <div class="field">
+      <label>Overall Session Quality</label>
+      <div class="hint">How would you rate today's overall session?</div>
+      <div class="stars" id="stars-overall"></div>
+      <div class="star-label" id="star-label-overall">Tap to rate</div>
+    </div>
+
+    <div class="field">
+      <label>Content Relevance</label>
+      <div class="hint">Was the content relevant to your learning goals?</div>
+      <div class="stars" id="stars-content"></div>
+      <div class="star-label" id="star-label-content">Tap to rate</div>
+    </div>
+
+    <div class="field">
+      <label>Facilitator / Speaker</label>
+      <div class="hint">How was the delivery by the speaker/facilitator?</div>
+      <div class="stars" id="stars-speaker"></div>
+      <div class="star-label" id="star-label-speaker">Tap to rate</div>
+    </div>
+
+    <div class="field">
+      <label>Hands-on / Practical Component</label>
+      <div class="hint">How useful were the hands-on activities today?</div>
+      <div class="stars" id="stars-practical"></div>
+      <div class="star-label" id="star-label-practical">Tap to rate</div>
+    </div>
+
+    <div class="section-title">Your Experience</div>
+
+    <div class="field">
+      <label>What did you enjoy most today?</label>
+      <div class="radio-group" id="enjoy-group">
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Theory Sessions</div>
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Hands-on Lab</div>
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Guest Speaker</div>
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Group Activities</div>
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Networking</div>
+        <div class="radio-opt" onclick="selectRadio(this,'enjoy')">Everything</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Pace of the session</label>
+      <div class="radio-group" id="pace-group">
+        <div class="radio-opt" onclick="selectRadio(this,'pace')">Too slow</div>
+        <div class="radio-opt" onclick="selectRadio(this,'pace')">Just right</div>
+        <div class="radio-opt" onclick="selectRadio(this,'pace')">Too fast</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Venue & Logistics</label>
+      <div class="radio-group" id="venue-group">
+        <div class="radio-opt" onclick="selectRadio(this,'venue')">Excellent</div>
+        <div class="radio-opt" onclick="selectRadio(this,'venue')">Good</div>
+        <div class="radio-opt" onclick="selectRadio(this,'venue')">Average</div>
+        <div class="radio-opt" onclick="selectRadio(this,'venue')">Poor</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Would you recommend this programme to others?</label>
+      <div class="radio-group" id="recommend-group">
+        <div class="radio-opt" onclick="selectRadio(this,'recommend')">Definitely Yes</div>
+        <div class="radio-opt" onclick="selectRadio(this,'recommend')">Probably Yes</div>
+        <div class="radio-opt" onclick="selectRadio(this,'recommend')">Not Sure</div>
+        <div class="radio-opt" onclick="selectRadio(this,'recommend')">No</div>
+      </div>
+    </div>
+
+    <div class="section-title">Open Feedback</div>
+
+    <div class="field">
+      <label>What could be improved?</label>
+      <textarea id="f-improve" rows="3" placeholder="Any suggestions for tomorrow…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Any other comments?</label>
+      <textarea id="f-comments" rows="3" placeholder="Anything else you'd like to share…"></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">Submit Feedback</button>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://ymprftmrojvmuvklyjay.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHJmdG1yb2p2bXV2a2x5amF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MDQ1NTksImV4cCI6MjA4OTA4MDU1OX0.kR9gnlaoAqs1LcdRO3t5DtG5rWKbpA3AyHKOhkF3RsM';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const DAY_DATES = {
+  '2026-03-23': { day: '1', label: 'Day 1 — 23 March 2026 (Monday)' },
+  '2026-03-24': { day: '2', label: 'Day 2 — 24 March 2026 (Tuesday)' },
+  '2026-03-25': { day: '3', label: 'Day 3 — 25 March 2026 (Wednesday)' },
+  '2026-03-26': { day: '4', label: 'Day 4 — 26 March 2026 (Thursday)' },
+  '2026-03-27': { day: '5', label: 'Day 5 — 27 March 2026 (Friday)' },
+};
+
+const STAR_LABELS = ['', 'Poor', 'Below Average', 'Average', 'Good', 'Excellent'];
+let ratings = { overall: 0, content: 0, speaker: 0, practical: 0 };
+let selections = { enjoy: '', pace: '', venue: '', recommend: '' };
+let currentDay = null;
+
+// ── INIT ──────────────────────────────────────────────────────────
+function init() {
+  // Check URL param ?day=1..5
+  const params = new URLSearchParams(window.location.search);
+  const forced = params.get('day');
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayInfo = DAY_DATES[todayStr];
+
+  if (forced && ['1','2','3','4','5'].includes(forced)) {
+    // Forced day via URL
+    const entry = Object.values(DAY_DATES).find(d => d.day === forced);
+    currentDay = forced;
+    document.getElementById('day-pill-text').textContent = entry ? entry.label : 'Day ' + forced;
+  } else if (todayInfo) {
+    // Auto-detect today
+    currentDay = todayInfo.day;
+    document.getElementById('day-pill-text').textContent = todayInfo.label;
+  } else {
+    // Not an event day — show day selector
+    currentDay = null;
+    document.getElementById('day-pill-text').textContent = 'Select a Day';
+    document.getElementById('feedback-form-wrap').style.display = 'none';
+    document.getElementById('not-event-day').style.display = 'block';
+
+    // Build manual day links
+    const container = document.getElementById('day-links-manual');
+    Object.values(DAY_DATES).forEach(d => {
+      const a = document.createElement('a');
+      a.className = 'day-link';
+      a.textContent = 'Day ' + d.day;
+      a.href = '?day=' + d.day;
+      container.appendChild(a);
+    });
+    return;
+  }
+
+  buildStars();
+}
+
+// ── STARS ─────────────────────────────────────────────────────────
+function buildStars() {
+  ['overall', 'content', 'speaker', 'practical'].forEach(key => {
+    const container = document.getElementById('stars-' + key);
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.textContent = '★';
+      star.dataset.val = i;
+      star.onclick = () => setRating(key, i);
+      container.appendChild(star);
+    }
+  });
+}
+
+function setRating(key, val) {
+  ratings[key] = val;
+  const container = document.getElementById('stars-' + key);
+  container.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('active', i < val);
+    s.style.color = i < val ? 'var(--y)' : 'var(--muted)';
+  });
+  document.getElementById('star-label-' + key).textContent = STAR_LABELS[val];
+}
+
+// ── RADIO ─────────────────────────────────────────────────────────
+function selectRadio(el, group) {
+  document.querySelectorAll('#' + group + '-group .radio-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selections[group] = el.textContent;
+}
+
+// ── SUBMIT ─────────────────────────────────────────────────────────
+async function submitFeedback(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  const payload = {
+    day:          currentDay,
+    name:         document.getElementById('f-name').value.trim() || 'Anonymous',
+    usn:          document.getElementById('f-usn').value.trim().toUpperCase() || null,
+    rating_overall:   ratings.overall   || null,
+    rating_content:   ratings.content   || null,
+    rating_speaker:   ratings.speaker   || null,
+    rating_practical: ratings.practical || null,
+    enjoyed:      selections.enjoy     || null,
+    pace:         selections.pace      || null,
+    venue:        selections.venue     || null,
+    recommend:    selections.recommend || null,
+    improve:      document.getElementById('f-improve').value.trim()  || null,
+    comments:     document.getElementById('f-comments').value.trim() || null,
+    submitted_at: new Date().toISOString(),
+  };
+
+  try {
+    const { error } = await sb.from('vap_feedback').insert(payload);
+    if (error) throw error;
+
+    // Show success
+    document.getElementById('feedback-form').style.display = 'none';
+    document.getElementById('success-card').style.display = 'block';
+    document.getElementById('success-card').scrollIntoView({ behavior: 'smooth' });
+  } catch(err) {
+    btn.disabled = false; btn.textContent = 'Submit Feedback';
+    showToast('Error: ' + (err.message || 'Please try again'));
+  }
+}
+
+let _tt;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+init();
+</script>
+</body>
+</html>
