@@ -1587,22 +1587,9 @@ function renderFbQR() {
   document.getElementById('fbqr-url').textContent = url;
 
   const img = document.getElementById('fbqr-img');
-  img.src = '';
-  img.alt = 'Generating…';
-
-  QRCode.toDataURL(url, {
-    width: 200,
-    margin: 2,
-    color: { dark: '#000000', light: '#ffffff' }
-  }, function(err, dataUrl) {
-    if (err) {
-      img.alt = 'QR Error: ' + err.message;
-      console.error('QR error:', err);
-      return;
-    }
-    img.src = dataUrl;
-    img.alt = 'QR Code for Day ' + fbQRDay;
-  });
+  img.alt = 'QR Code';
+  // Use Google Charts QR API — no library needed, always works
+  img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + encodeURIComponent(url) + '&choe=UTF-8&chld=M|2';
 }
 
 function copyFbLink() {
