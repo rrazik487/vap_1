@@ -559,7 +559,9 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
       <div class="fbqr-day-opt" data-day="4" onclick="selectFbDay(this)">Day 4<br/><span style="font-size:0.5rem;opacity:0.7;">26 Mar</span></div>
       <div class="fbqr-day-opt" data-day="5" onclick="selectFbDay(this)">Day 5<br/><span style="font-size:0.5rem;opacity:0.7;">27 Mar</span></div>
     </div>
-    <img id="fbqr-img" width="200" height="200" style="margin:0 auto 0.8rem;display:block;border-radius:10px;border:3px solid var(--p);background:#fff;" alt="QR Code"/>
+    <div id="fbqr-wrap" style="width:200px;height:200px;margin:0 auto 0.8rem;border-radius:10px;border:3px solid var(--p);background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <img id="fbqr-img" width="200" height="200" style="display:block;" alt="QR Code"/>
+    </div>
     <div class="fbqr-url" id="fbqr-url" onclick="copyFbLink()" title="Click to copy link"></div>
     <div class="fbqr-actions">
       <button class="fbqr-copy-btn" onclick="copyFbLink()">&#128203; Copy Link</button>
@@ -1580,6 +1582,42 @@ function selectFbDay(el) {
   renderFbQR();
 }
 
+function renderFbQRCanvas(url) {
+  // Fallback: load qrcodejs and render into a div inside the wrap
+  const wrap = document.getElementById('fbqr-wrap');
+  const img = document.getElementById('fbqr-img');
+  img.style.display = 'none';
+
+  // Remove any previous qr div
+  const old = document.getElementById('fbqr-qrdiv');
+  if (old) old.remove();
+
+  const div = document.createElement('div');
+  div.id = 'fbqr-qrdiv';
+  wrap.appendChild(div);
+
+  function makeQR() {
+    new QRCode(div, {
+      text: url,
+      width: 194,
+      height: 194,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  if (typeof QRCode !== 'undefined' && QRCode.CorrectLevel) {
+    makeQR();
+  } else {
+    // Load qrcodejs library
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+    s.onload = makeQR;
+    document.head.appendChild(s);
+  }
+}
+
 function renderFbQR() {
   const TOKENS = {'1':'fbD1vap','2':'fbD2vap','3':'fbD3vap','4':'fbD4vap','5':'fbD5vap'};
   const token = TOKENS[fbQRDay];
@@ -1587,9 +1625,20 @@ function renderFbQR() {
   document.getElementById('fbqr-url').textContent = url;
 
   const img = document.getElementById('fbqr-img');
-  img.alt = 'QR Code';
-  // Use Google Charts QR API — no library needed, always works
-  img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + encodeURIComponent(url) + '&choe=UTF-8&chld=M|2';
+  img.alt = 'Loading QR…';
+  img.src = '';
+  img.style.display = 'block';
+  const old = document.getElementById('fbqr-qrdiv');
+  if (old) old.remove();
+
+  // Use qr-server API — simple GET request, returns PNG directly
+  const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url) + '&bgcolor=ffffff&color=000000&margin=10&format=png';
+  img.onload = () => { img.alt = 'QR Code Day ' + fbQRDay; };
+  img.onerror = () => {
+    // Final fallback: draw QR manually using canvas
+    renderFbQRCanvas(url);
+  };
+  img.src = apiUrl;
 }
 
 function copyFbLink() {
