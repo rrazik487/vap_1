@@ -240,7 +240,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 .fbqr-day-opt{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.32rem 0.7rem;border-radius:6px;cursor:pointer;transition:all 0.15s;}
 .fbqr-day-opt:hover{border-color:var(--p);color:var(--p);}
 .fbqr-day-opt.selected{background:var(--p);border-color:var(--p);color:#fff;font-weight:700;}
-#fbqr-canvas{margin:0 auto 0.8rem;display:block;border-radius:10px;border:3px solid var(--p);}
+#fbqr-canvas{margin:0 auto 0.8rem;display:block;border-radius:10px;border:3px solid var(--p);background:#ffffff;}
 .fbqr-url{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);word-break:break-all;background:var(--s2);padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
 .fbqr-url:hover{background:var(--s3);}
 .fbqr-actions{display:flex;gap:0.5rem;justify-content:center;}
@@ -1582,17 +1582,26 @@ function selectFbDay(el) {
 }
 
 function renderFbQR() {
-  const url = 'https://razik.xyz/feedback?day=' + fbQRDay;
+  // Token so only QR-holders can access — simple per-day token
+  const TOKENS = {'1':'fbD1vap','2':'fbD2vap','3':'fbD3vap','4':'fbD4vap','5':'fbD5vap'};
+  const token = TOKENS[fbQRDay];
+  const url = 'https://razik.xyz/feedback?day=' + fbQRDay + '&t=' + token;
   document.getElementById('fbqr-url').textContent = url;
+
+  // Render QR on white background so it's visible
   const canvas = document.getElementById('fbqr-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   QRCode.toCanvas(canvas, url, {
-    width: 200, margin: 2,
+    width: 200,
+    margin: 2,
     color: { dark: '#000000', light: '#ffffff' }
   }, err => { if (err) console.warn('QR error:', err); });
 }
 
 function copyFbLink() {
-  const url = 'https://razik.xyz/feedback?day=' + fbQRDay;
+  const TOKENS = {'1':'fbD1vap','2':'fbD2vap','3':'fbD3vap','4':'fbD4vap','5':'fbD5vap'};
+  const url = 'https://razik.xyz/feedback?day=' + fbQRDay + '&t=' + TOKENS[fbQRDay];
   navigator.clipboard.writeText(url).then(() => {
     showToast('Link copied: Day ' + fbQRDay, 'g');
   }).catch(() => {
