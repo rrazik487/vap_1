@@ -230,6 +230,25 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
 .fb-no-data{text-align:center;padding:3rem;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.72rem;}
 .fb-section-title{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--p);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.6rem;margin-top:1.5rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border);}
 
+/* ─── FEEDBACK QR MODAL ───────────────────────────────────────────── */
+.fbqr-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(10px);z-index:700;display:none;align-items:center;justify-content:center;padding:1rem;}
+.fbqr-modal-bg.open{display:flex;}
+.fbqr-modal{background:var(--s1);border:1px solid var(--border2);border-radius:18px;padding:2rem;max-width:380px;width:100%;text-align:center;}
+.fbqr-modal h3{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;margin-bottom:0.25rem;}
+.fbqr-sub{font-size:0.78rem;color:var(--muted2);margin-bottom:1.2rem;}
+.fbqr-day-row{display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.2rem;}
+.fbqr-day-opt{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.68rem;padding:0.32rem 0.7rem;border-radius:6px;cursor:pointer;transition:all 0.15s;}
+.fbqr-day-opt:hover{border-color:var(--p);color:var(--p);}
+.fbqr-day-opt.selected{background:var(--p);border-color:var(--p);color:#fff;font-weight:700;}
+#fbqr-canvas{margin:0 auto 0.8rem;display:block;border-radius:10px;border:3px solid var(--p);}
+.fbqr-url{font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--muted);word-break:break-all;background:var(--s2);padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:1rem;cursor:pointer;transition:background 0.15s;}
+.fbqr-url:hover{background:var(--s3);}
+.fbqr-actions{display:flex;gap:0.5rem;justify-content:center;}
+.fbqr-copy-btn{background:var(--s2);border:1px solid var(--border2);color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.78rem;padding:0.42rem 1rem;border-radius:7px;cursor:pointer;transition:all 0.15s;}
+.fbqr-copy-btn:hover{border-color:var(--p);color:var(--p);}
+.fbqr-close-btn{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-family:'Cabinet Grotesk',sans-serif;font-size:0.78rem;padding:0.42rem 1rem;border-radius:7px;cursor:pointer;}
+.fbqr-close-btn:hover{border-color:var(--r);color:var(--r);}
+
 /* ─── QR MODAL ────────────────────────────────────────────────────── */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(10px);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem;}
 .modal-bg.open{display:flex;}
@@ -337,6 +356,7 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
     </nav>
     <div class="hdr-right">
       <button class="scan-btn" id="scan-btn-hdr" onclick="window.open('scanner.html','_blank')" style="display:none;">&#9654; Scan QR</button>
+      <button class="scan-btn" id="fbqr-btn-hdr" onclick="openFbQR()" style="display:none;background:var(--p);">&#128203; Feedback QR</button>
       <div class="user-chip" onclick="showUserMenu()">
         <div class="uavatar" id="u-avatar">?</div>
         <span class="uname" id="u-name">...</span>
@@ -528,6 +548,27 @@ header{position:sticky;top:0;z-index:200;background:rgba(6,7,9,0.88);backdrop-fi
   </div>
 </div>
 
+<!-- FEEDBACK QR MODAL -->
+<div class="fbqr-modal-bg" id="fbqr-modal-bg" onclick="if(event.target===this)closeFbQR()">
+  <div class="fbqr-modal">
+    <h3>&#128203; Feedback QR Code</h3>
+    <p class="fbqr-sub">Select a day — share the QR with participants to collect feedback</p>
+    <div class="fbqr-day-row">
+      <div class="fbqr-day-opt selected" data-day="1" onclick="selectFbDay(this)">Day 1<br/><span style="font-size:0.5rem;opacity:0.7;">23 Mar</span></div>
+      <div class="fbqr-day-opt" data-day="2" onclick="selectFbDay(this)">Day 2<br/><span style="font-size:0.5rem;opacity:0.7;">24 Mar</span></div>
+      <div class="fbqr-day-opt" data-day="3" onclick="selectFbDay(this)">Day 3<br/><span style="font-size:0.5rem;opacity:0.7;">25 Mar</span></div>
+      <div class="fbqr-day-opt" data-day="4" onclick="selectFbDay(this)">Day 4<br/><span style="font-size:0.5rem;opacity:0.7;">26 Mar</span></div>
+      <div class="fbqr-day-opt" data-day="5" onclick="selectFbDay(this)">Day 5<br/><span style="font-size:0.5rem;opacity:0.7;">27 Mar</span></div>
+    </div>
+    <canvas id="fbqr-canvas" width="200" height="200"></canvas>
+    <div class="fbqr-url" id="fbqr-url" onclick="copyFbLink()" title="Click to copy link"></div>
+    <div class="fbqr-actions">
+      <button class="fbqr-copy-btn" onclick="copyFbLink()">&#128203; Copy Link</button>
+      <button class="fbqr-close-btn" onclick="closeFbQR()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -648,6 +689,11 @@ function onAuthed() {
   if (U.perms.scanQR) {
     document.getElementById('scan-btn-hdr').style.display = 'block';
     document.getElementById('scan-btn-mob').style.display = 'block';
+  }
+
+  // Show feedback QR button for admins
+  if (U.role === 'admin') {
+    document.getElementById('fbqr-btn-hdr').style.display = 'block';
   }
 
   // Mobile nav
@@ -1502,6 +1548,56 @@ async function downloadFeedbackPDF() {
   } catch(e) {
     showToast('PDF error: ' + e.message, '');
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  FEEDBACK QR
+// ═══════════════════════════════════════════════════════════════════
+let fbQRDay = '1';
+
+function openFbQR() {
+  // Auto-select today's day
+  const todayStr = new Date().toISOString().split('T')[0];
+  const DAY_DATES_MAP = {'2026-03-23':'1','2026-03-24':'2','2026-03-25':'3','2026-03-26':'4','2026-03-27':'5'};
+  const todayDay = DAY_DATES_MAP[todayStr];
+  if (todayDay) {
+    fbQRDay = todayDay;
+    document.querySelectorAll('.fbqr-day-opt').forEach(o => {
+      o.classList.toggle('selected', o.dataset.day === todayDay);
+    });
+  }
+  document.getElementById('fbqr-modal-bg').classList.add('open');
+  renderFbQR();
+}
+
+function closeFbQR() {
+  document.getElementById('fbqr-modal-bg').classList.remove('open');
+}
+
+function selectFbDay(el) {
+  document.querySelectorAll('.fbqr-day-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  fbQRDay = el.dataset.day;
+  renderFbQR();
+}
+
+function renderFbQR() {
+  const url = 'https://razik.xyz/feedback?day=' + fbQRDay;
+  document.getElementById('fbqr-url').textContent = url;
+  const canvas = document.getElementById('fbqr-canvas');
+  QRCode.toCanvas(canvas, url, {
+    width: 200, margin: 2,
+    color: { dark: '#000000', light: '#ffffff' }
+  }, err => { if (err) console.warn('QR error:', err); });
+}
+
+function copyFbLink() {
+  const url = 'https://razik.xyz/feedback?day=' + fbQRDay;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('Link copied: Day ' + fbQRDay, 'g');
+  }).catch(() => {
+    showToast('Copy failed — select text manually', '');
+  });
 }
 
 let _tt;

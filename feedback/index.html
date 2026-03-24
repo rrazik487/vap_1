@@ -103,16 +103,8 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   <div class="day-pill"><div class="dp-dot"></div><span id="day-pill-text">Loading…</span></div>
   <h1>How was<br/><em>today's session?</em></h1>
   <p>Your feedback helps us improve the programme.<br/>Takes less than 2 minutes.</p>
-</div>
-
-<!-- NOT-AN-EVENT-DAY VIEW (hidden by default) -->
-<div class="form-wrap" id="not-event-day" style="display:none;">
-  <div class="not-today">
-    <div style="font-size:2rem;margin-bottom:0.8rem;">📅</div>
-    <h2>Select a Day</h2>
-    <p>The VAP runs from 23–27 March 2026.<br/>You can submit feedback for any day below.</p>
-    <div class="day-links" id="day-links-manual"></div>
-  </div>
+  <!-- Day switcher — always visible -->
+  <div style="display:flex;gap:0.4rem;flex-wrap:wrap;justify-content:center;margin-top:0.5rem;" id="day-switcher"></div>
 </div>
 
 <!-- FEEDBACK FORM -->
@@ -247,41 +239,45 @@ let currentDay = null;
 
 // ── INIT ──────────────────────────────────────────────────────────
 function init() {
-  // Check URL param ?day=1..5
   const params = new URLSearchParams(window.location.search);
   const forced = params.get('day');
-
   const todayStr = new Date().toISOString().split('T')[0];
   const todayInfo = DAY_DATES[todayStr];
 
+  // Determine which day to show by default
   if (forced && ['1','2','3','4','5'].includes(forced)) {
-    // Forced day via URL
-    const entry = Object.values(DAY_DATES).find(d => d.day === forced);
     currentDay = forced;
-    document.getElementById('day-pill-text').textContent = entry ? entry.label : 'Day ' + forced;
   } else if (todayInfo) {
-    // Auto-detect today
     currentDay = todayInfo.day;
-    document.getElementById('day-pill-text').textContent = todayInfo.label;
   } else {
-    // Not an event day — show day selector
-    currentDay = null;
-    document.getElementById('day-pill-text').textContent = 'Select a Day';
-    document.getElementById('feedback-form-wrap').style.display = 'none';
-    document.getElementById('not-event-day').style.display = 'block';
-
-    // Build manual day links
-    const container = document.getElementById('day-links-manual');
-    Object.values(DAY_DATES).forEach(d => {
-      const a = document.createElement('a');
-      a.className = 'day-link';
-      a.textContent = 'Day ' + d.day;
-      a.href = '?day=' + d.day;
-      container.appendChild(a);
-    });
-    return;
+    // After event — default to Day 5; before event — default to Day 1
+    const todayDate = new Date(todayStr);
+    const eventStart = new Date('2026-03-23');
+    currentDay = todayDate < eventStart ? '1' : '5';
   }
 
+  // Build day switcher — always visible, shows all 5 days
+  const switcher = document.getElementById('day-switcher');
+  Object.values(DAY_DATES).forEach(d => {
+    const btn = document.createElement('a');
+    btn.className = 'day-link' + (d.day === currentDay ? ' active-day' : '');
+    btn.textContent = 'Day ' + d.day;
+    btn.href = '?day=' + d.day;
+    // Past days get a subtle indicator
+    const dDate = new Date(['2026-03-23','2026-03-24','2026-03-25','2026-03-26','2026-03-27'][+d.day-1]);
+    if (dDate < new Date() && d.day !== currentDay) {
+      btn.title = 'Submit feedback for Day ' + d.day;
+      btn.style.opacity = '0.75';
+    }
+    switcher.appendChild(btn);
+  });
+
+  // Update pill label
+  const entry = Object.values(DAY_DATES).find(d => d.day === currentDay);
+  document.getElementById('day-pill-text').textContent = entry ? entry.label : 'Day ' + currentDay;
+
+  // Always show the form (past days are allowed)
+  document.getElementById('feedback-form-wrap').style.display = 'block';
   buildStars();
 }
 
