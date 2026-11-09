@@ -41,6 +41,9 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px
 
 /* Hero */
 .hero{padding:88px 0 56px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.callsign{color:var(--ink)}
+.callsign b{color:var(--accent);font-weight:700;letter-spacing:.05em}
 .status{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--muted);background:var(--soft);border:1px solid var(--line);padding:6px 12px;border-radius:999px}
 .dot{width:8px;height:8px;border-radius:50%;background:#22A06B;box-shadow:0 0 0 3px color-mix(in srgb,#22A06B 22%,transparent)}
 .hero h1{font-size:clamp(40px,6.4vw,64px);font-weight:800;letter-spacing:-.025em;margin:22px 0 18px}
@@ -105,12 +108,12 @@ section h2{font-size:clamp(28px,3.6vw,36px);font-weight:800;letter-spacing:-.02e
 .award span{color:var(--muted);font-size:15px}
 
 /* Contact */
-.contact{margin:96px 0 0;background:var(--ink);color:var(--bg);border-radius:20px;padding:56px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
+.contact{margin:96px 0 0;background:var(--accent);color:#fff;border-radius:20px;padding:56px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
 .contact h2{font-size:clamp(28px,3.8vw,40px);font-weight:800;letter-spacing:-.02em;margin-bottom:12px}
-.contact p{opacity:.75}
+.contact p{opacity:.92}
 .links{display:flex;flex-direction:column;gap:10px}
-.links a{display:flex;justify-content:space-between;gap:12px;align-items:center;text-decoration:none;padding:14px 18px;border-radius:12px;background:color-mix(in srgb,var(--bg) 10%,transparent);font-weight:600;font-size:15.5px;word-break:break-word}
-.links a:hover{background:color-mix(in srgb,var(--bg) 18%,transparent)}
+.links a{display:flex;justify-content:space-between;gap:12px;align-items:center;text-decoration:none;padding:14px 18px;border-radius:12px;background:#fff;color:var(--ink);font-weight:600;font-size:15.5px;word-break:break-word}
+.links a:hover{background:#EEF2FF}
 .links small{opacity:.65;font-weight:500}
 
 footer{padding:36px 0 48px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -135,7 +138,7 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:14px;display:flex;justif
 
 <nav aria-label="Main">
   <div class="wrap">
-    <a class="logo" href="#top">S Razikur Rahman</a>
+    <a class="logo" href="#top">S RAZIKUR RAHMAN</a>
     <div class="navlinks">
       <a href="#roles">Roles</a>
       <a href="#projects">Projects</a>
@@ -148,8 +151,8 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:14px;display:flex;justif
 <main class="wrap" id="top">
 
   <header class="hero">
-    <span class="status"><span class="dot" aria-hidden="true"></span>Open to full-time roles from 2027 · Internships now</span>
-    <h1>S Razikur Rahman</h1>
+    <div class="pills"><span class="status"><span class="dot" aria-hidden="true"></span>Open to full-time roles from 2027 · Internships now</span><span class="status callsign">Amateur radio call sign <b>VU36RR</b></span></div>
+    <h1>S RAZIKUR RAHMAN</h1>
     <p class="role-line">Network, Satcom &amp; Embedded Engineer</p>
     <p class="lede">Final-year <b>B.Tech ECE</b> student at JAIN University, Bengaluru, and <b>Network Engineer Intern</b> at Netzy Internet Services. I build things that talk to each other, from ISP networks to GNSS and LoRa radios to the boards that run them.</p>
     <div class="actions">
@@ -257,7 +260,7 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:14px;display:flex;justif
     <h2 id="h-skills">Skills</h2>
     <div class="two" style="margin-top:28px">
       <div class="skill"><h3>Networking</h3><ul><li>ISP network operations</li><li>TCP/IP fundamentals</li><li>Linux (RHEL)</li><li>Wireless &amp; mesh networks</li><li>Cybersecurity basics</li></ul></div>
-      <div class="skill"><h3>Satcom &amp; RF</h3><ul><li>GNSS / NavIC</li><li>LoRa telemetry</li><li>RTL-SDR, ADS-B</li><li>CST Studio Suite</li><li>Indian band compliance</li></ul></div>
+      <div class="skill"><h3>Satcom &amp; RF</h3><ul><li>GNSS / NavIC</li><li>LoRa telemetry</li><li>RTL-SDR, ADS-B</li><li>CST Studio Suite</li><li>Amateur radio operator · VU36RR</li></ul></div>
       <div class="skill"><h3>Embedded</h3><ul><li>C / C++</li><li>ESP32, STM32, Teensy</li><li>I²C, SPI, UART</li><li>KiCad PCB design</li><li>MATLAB, Python</li></ul></div>
     </div>
   </section>
@@ -282,11 +285,12 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:14px;display:flex;justif
       <a href="mailto:rrazik487@gmail.com">rrazik487@gmail.com <small>Email</small></a>
       <a href="https://www.linkedin.com/in/s-razikur-rahman-304415235/">linkedin.com/in/s-razikur-rahman <small>LinkedIn</small></a>
       <a href="https://github.com/rrazik487">github.com/rrazik487 <small>GitHub</small></a>
+      <a href="#top">VU36RR <small>Ham call sign</small></a>
       <a href="#top">Bengaluru, India <small>Open to relocate</small></a>
     </div>
   </section>
 
-  <footer><span>© 2026 S Razikur Rahman</span><span>razik.xyz</span></footer>
+  <footer><span>© 2026 S Razikur Rahman · VU36RR</span><span>razik.xyz</span></footer>
 </main>
 </body>
 </html>
